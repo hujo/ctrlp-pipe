@@ -176,7 +176,7 @@ function! s:readLine() abort "{{{
   let file = fnamemodify(expand(get(g:, 'ctrlp_pipe_file', s:SFILE)), ':p')
   let cmds = {}
   if file !=# s:SFILE && get(g:, 'ctrlp_pipe_file_extend', 0)
-    let cmds = s:getCmds(s:SFILE)
+    let cmds = extend(cmds, s:getCmds(s:SFILE))
   endif
   let cmds = s:getCmds(file, cmds)
   let g:ctrlp_pipe_file = file
@@ -262,7 +262,7 @@ sys/win/reg/query :cal ctrlp#pipe#opt({'type': 'file'}) |
              'v:val !~# ''\v^\s*$'''
            )
     --- if S[-1] ==# S[-2] | call remove(S, -1) | endif
-    --t call remove(S,-2,-1) --- exe C
+    --t call remove(S, -1) --- exe C
 
 Filer
   " [t] lcd [ehv] ctrlp#acceptfile

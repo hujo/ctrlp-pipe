@@ -34,6 +34,17 @@ function! s:doExp(mode, str) abort "{{{
     endif
   endfor
 endfunction "}}}
+function! s:parseCmdLine(line) abort "{{{
+  " Todo:
+  " regexp:
+  "  case of separator in the string
+  "      '\v"([^\"]|\\.)*"'
+  "      '\v''(''''|[^''])*'''
+  "
+  " return: [input, body, pats]
+  "   input --> body --- pats
+  "     pats = [[mode, expr], [mode, expr]]
+endfunction "}}}
 function! s:getWithTypeOfB(dict, key, B) abort "{{{
   let val = get(a:dict, a:key, a:B)
   return type(val) is type(a:B) ? val : a:B
@@ -126,11 +137,7 @@ endfunction "}}}
 function! ctrlp#pipe#read(str) abort "{{{
   let str = substitute(a:str, '\v(\r|\n)$', '', 'g')
   " Todo:
-  "   1. case of separator in the string
-  "     * '\v"([^\"]|\\.)*"'
-  "     * '\v''(''''|[^''])*'''
-  "   2. changeable option. example 'type'
-  "       ctrlp#pipe#opt()
+  "  See: s:parseCmdLine()
   let pats = []
   if match(str, '\V\s\+-->\s\+') != -1
     let tmp = split(str, '\V\s\+-->\s\+')
