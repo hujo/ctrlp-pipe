@@ -10,9 +10,9 @@ if get(g:, 'loaded_ctrlp_pipe', 0)
 endif
 let g:loaded_ctrlp_pipe = 1
 
-function! s:toP(val) abort "{{{
+function! s:toP(val, ...) abort "{{{
   let t = type(a:val)
-  if type('') == t | return a:val | endif
+  if type('') == t | return a:0 ? string(a:val) : a:val | endif
   if type(10) == t | return a:val | endif
   if type({}) == t ||
   \  type([]) == t | return s:toP(string(a:val)) | endif
@@ -22,7 +22,7 @@ function! s:toT(expr) abort "{{{
   let t = type(a:expr)
   if     t == type('') | return split(a:expr, '\v\r\n|\n|\r')
   elseif t == type([]) | return map(copy(a:expr), 's:toP(v:val)')
-  elseif t == type({}) | return values(map(copy(a:expr), 'string(v:key) . '': '' . s:toP(v:val)'))
+  elseif t == type({}) | return values(map(copy(a:expr), 'string(v:key) . '': '' . s:toP(v:val, 1)'))
   endif
   return []
 endfunction "}}}
@@ -134,18 +134,21 @@ function! ctrlp#pipe#accept(mode, str) abort "{{{
   let s:RETRY = 1 | call s:doExp(a:mode, a:str)
   let s:RETRY = 0 | call ctrlp#pipe#exit()
 endfunction "}}}
-function! ctrlp#pipe#read(str) abort "{{{
-  let str = substitute(a:str, '\v(\r|\n)$', '', 'g')
+function! ctrlp#pipe#read(line) abort "{{{
+  let line = substitute(a:line, '\v(\r|\n)$', '', 'g')
+  if !s:RETRY | let s:COMMAND = line | endif
   " Todo:
   "  See: s:parseCmdLine()
+  " let [input, s:TARGET, s:ACTION] = s:parseCmdLine(line)
+  " {{{
   let pats = []
-  if match(str, '\V\s\+-->\s\+') != -1
-    let tmp = split(str, '\V\s\+-->\s\+')
+  if match(line, '\V\s\+-->\s\+') != -1
+    let tmp = split(line, '\V\s\+-->\s\+')
     let input = remove(tmp, 0)
     let body = join(tmp, '')
     unlet! tmp
   else
-    let [input, body] = ['', str]
+    let [input, body] = ['', line]
   endif
   let tmp = split(body, '\v\s+--\ze[thev-]\s+')
   let body = remove(tmp, 0)
@@ -153,14 +156,13 @@ function! ctrlp#pipe#read(str) abort "{{{
     call add(pats, [t[0], substitute(strpart(t, 1), '\v^\s+', '', 'g')])
   endfor
   unlet! tmp
-  if !s:RETRY
-    let s:COMMAND = str
-  endif
+  " }}}
   if !s:RETRY || !exists('s:SELECTION') || empty(s:SELECTION)
     let s:SELECTION = [input]
   endif
-  unlet! s:TARGET | unlet! s:ACTION
+  " {{{
   let [s:TARGET, s:ACTION] = [s:toT(ctrlp#pipe#expr#eval(body)), pats]
+  " }}}
   return s:ID
 endfunction "}}}
 

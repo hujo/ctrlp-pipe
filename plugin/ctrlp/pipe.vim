@@ -177,7 +177,7 @@ function! s:readLine() abort "{{{
   let file = fnamemodify(expand(get(g:, 'ctrlp_pipe_file', s:SFILE)), ':p')
   let cmds = {}
   if file !=# s:SFILE && get(g:, 'ctrlp_pipe_file_extend', 0)
-    let cmds = extend(cmds, s:getCmds(s:SFILE))
+    let cmds = s:getCmds(s:SFILE, cmds)
   endif
   let cmds = s:getCmds(file, cmds)
   let g:ctrlp_pipe_file = file
@@ -250,7 +250,8 @@ line/jump :cal ctrlp#pipe#opt({'type': 'tab'}) |
 
 " The default value of "opmul" is 0, so change it to 1
 file/old :cal ctrlp#pipe#opt({'opmul': 1}) |
-  " [opmul] true [ehtv] ctrlp#acceptfile
+  " [ehtv] ctrlp#acceptfile
+  " 'opmul': true
   reverse(filter(copy(v:oldfiles),'filereadable(expand(v:val))'))
     --- call ctrlp#acceptfile(a:mode,S[-1])
 
@@ -263,10 +264,11 @@ sys/win/reg/query :cal ctrlp#pipe#opt({'type': 'file'}) |
              'v:val !~# ''\v^\s*$'''
            )
     --- if S[-1] ==# S[-2] | call remove(S, -1) | endif
-    --t call remove(S, -1) --- exe C
+    --t call remove(S, -2, -1) --- exe C
 
 Filer
-  " [t] lcd [ehv] ctrlp#acceptfile
+  " [t] lcd (dir)
+  " [ehtv] ctrlp#acceptfile
   ./ --> extend(map(glob(S[-1].'*',0,1),
           'fnamemodify(v:val,'':t'') . (isdirectory(v:val) ? ''/'' : '''')'
          ), ['..', '.'])
@@ -294,7 +296,8 @@ Git/log/diff :cal ctrlp#pipe#opt({'type': 'line'}) |
       | setl bt=nofile bh=hide noswf nobl | setf diff
 
 Git/file/ls :cal ctrlp#pipe#opt({'opmul': 1}) |
-  " [opmul] true [ehtv] ctrlp#acceptfile
+  " [ehtv] ctrlp#acceptfile
+  " 'opmul': true
   system('git ls-files') --- call ctrlp#acceptfile(a:mode,S[-1])
 
 hist/cmd :cal ctrlp#pipe#opt({'type': 'line'}) |
@@ -312,7 +315,7 @@ hist/search :cal ctrlp#pipe#opt({'type': 'line'}) |
     --h cal histdel('/', S[-1]) | exe C
 
 Log :cal ctrlp#pipe#opt({'type': 'line', }) |
-  " This is a command for viewing the error log.
+  " Viewing the error log.
   (len(S) < 2 ? ctrlp#pipe#log() : get(ctrlp#pipe#log(), S[-1], []))
   --- if len(S) > 2 | call remove(S, -1)
              | else | let S[-1] = split(S[-1])[0] | endif
