@@ -33,14 +33,11 @@ Variable `C`, `S`, `T` and `_` can be used in the A and B.
 
 #### ` --> `
 
-` --> ` is describe in front of the *A*.
+` --> ` is describe in front of the `A`.
 
     :CtrlPipe String --> A --- B
 
 String is evaluated as a string. do not need to be enclosed in quotes.
-
-* **TODO:** :
-  If writing an `"` or `'`, need to be escaped. way is to make it to the double. `" -> ""`, `' -> ''`.
 
 S is initialized with `['String']`.  
 Also, if S has become empty, S will be `['String']`.  
