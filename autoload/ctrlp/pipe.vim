@@ -108,6 +108,8 @@ function! ctrlp#pipe#exit(...) abort "{{{
   if s:RETRY is 0
     let g:ctrlp_ext_vars[s:IDX] = extend(copy(s:pipe_core), s:pipe_opt)
   endif
+  let mdata = get(ctrlp#getvar('s:'), 'mdata', [])
+  if get(mdata, 1, 0) is s:ID | call remove(mdata, 0, -1) | endif
 endfunction "}}}
 function! ctrlp#pipe#opt( keyOrDict, ... ) abort "{{{
   if type( a:keyOrDict ) is type('')

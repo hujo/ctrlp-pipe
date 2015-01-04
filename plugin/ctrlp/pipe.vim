@@ -243,10 +243,10 @@ This is Commentout
 
 
 " Sample: {{{2
-" The default value of "type" is "path", so change it to "line"
-line/jump :cal ctrlp#pipe#opt({'type': 'tab'}) |
-  map(getline(0,'$'),'(v:key+1)."\t".v:val')
-    --- exe 'norm' matchstr(S[-1],'\v^\d+').'ggzvzz'
+" The default value of "type" is "path", so change it to "tabe"
+line/jump :cal ctrlp#pipe#opt({'type': 'tabe'}) |
+  map(getline(0,'$'),'v:val."\t".(v:key+1)')
+    --- exe 'norm' matchstr(S[-1],'\v\d+$').'ggzvzz'
 
 " The default value of "opmul" is 0, so change it to 1
 file/old :cal ctrlp#pipe#opt({'opmul': 1}) |
@@ -291,9 +291,11 @@ Git/grep/e :call ctrlp#pipe#opt({'type': 'tab'}) |
 Git/log/diff :cal ctrlp#pipe#opt({'type': 'line'}) |
   " [ehtv] open git diff buffer
   reverse(systemlist('git log --pretty=format:"%h %s %ad" --date=relative'))
-    --- call ctrlp#acceptfile(a:mode, S[-1])
-      | call setline(1, systemlist(printf('git diff %s', split(S[-1])[0])))
-      | setl bt=nofile bh=hide noswf nobl | setf diff
+    --e if '' !=# expand('%') | new | else | %delete _ | endif
+    --t tabnew --v vsplit --h split
+    --- call setline(1, systemlist(printf('git diff %s', split(S[-1])[0])))
+      | setl buftype=nofile bufhidden=hide noswapfile nobuflisted
+      | setf diff
 
 Git/file/ls :cal ctrlp#pipe#opt({'opmul': 1}) |
   " [ehtv] ctrlp#acceptfile
