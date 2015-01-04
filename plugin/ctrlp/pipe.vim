@@ -117,11 +117,12 @@ function! s:getFiniPos(lines) "{{{
       return idx
     endif
   endfor
+  return -1
 endfunction "}}}
 function! s:buildCmds(filepath) abort "{{{
   let is_comment = 0
   let [list, lines] = [[], readfile(a:filepath)]
-  let [idx, length] = [s:getFiniPos(lines) -1, len(lines) - 1]
+  let [idx, length] = [s:getFiniPos(lines), len(lines) - 1]
   while idx < length
     let idx += 1
     let line = lines[idx]
@@ -276,6 +277,14 @@ Filer
 Redir :call ctrlp#pipe#opt({'type': 'line'}) |
   " Please input command!
   _.redir(insert(S, input('input command: ','','command'), 0)[0])
+
+Git/grep/e :call ctrlp#pipe#opt({'type': 'tab'}) |
+  " git grep -n -E shellescape(input()) --- [ehtv] ctrlp#acceptfile
+  map( split( system( printf( 'git grep -n -E %s',
+            map( [input('GitGrep: ')], 'v:val ==# '''' ? '''' : shellescape(v:val)' )[0] ) ), "\n" ),
+      'join(reverse(split(v:val, ''\v^\f+:\d+\zs:'')), "\t")' )
+  --- call call( 'ctrlp#acceptfile',
+        [a:mode] + split( split( S[-1] )[-1], '\v:\ze\d+$' ) )
 
 Git/log/diff :cal ctrlp#pipe#opt({'type': 'line'}) |
   " [ehtv] open git diff buffer

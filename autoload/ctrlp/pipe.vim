@@ -103,7 +103,7 @@ function! ctrlp#pipe#init(...) abort "{{{
 endfunction "}}}
 function! ctrlp#pipe#exit(...) abort "{{{
   if a:0 && a:1 is 1
-    let s:RETRY = 0
+    let [s:RETRY, s:TARGET] = [0, []]
   endif
   if s:RETRY is 0
     let g:ctrlp_ext_vars[s:IDX] = extend(copy(s:pipe_core), s:pipe_opt)
