@@ -292,7 +292,7 @@ Git/log/diff :cal ctrlp#pipe#opt({'type': 'line'}) |
   " [ehtv] open git diff buffer
   reverse(systemlist('git log --pretty=format:"%h %s %ad" --date=relative'))
     --e if '' !=# expand('%') | new | else | %delete _ | endif
-    --t tabnew --v vsplit --h split
+    --t tabnew --v vnew --h new
     --- call setline(1, systemlist(printf('git diff %s', split(S[-1])[0])))
       | setl buftype=nofile bufhidden=hide noswapfile nobuflisted
       | setf diff
