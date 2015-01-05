@@ -75,7 +75,7 @@ Using the `C` then configure the loop. `<C-t>` Check the scope.
 
 Behaves like ctrlp-line.
 
-    :CtrlPipe map(getline(0, '$'), '(v:key+1).":\t".v:val') --- exe 'normal!' split(S[-1], ':')[0] . 'ggzvzz'
+    :CtrlPipe sort(map(getline(0, '$'), 'v:val."\t".(v:key+1)')) --- exe 'normal!' split(S[-1], '\t')[-1] . 'ggzvzz'
 
 
 ------------------------------------------------------------------------------

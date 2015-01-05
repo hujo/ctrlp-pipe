@@ -245,7 +245,7 @@ This is Commentout
 " Sample: {{{2
 " The default value of "type" is "path", so change it to "tabe"
 line/jump :cal ctrlp#pipe#opt({'type': 'tabe'}) |
-  map(getline(0,'$'),'v:val."\t".(v:key+1)')
+  sort(map(getline(0,'$'),'substitute(v:val, ''\t'', '' '', ''g'')."\t".(v:key+1)'))
     --- exe 'norm' matchstr(S[-1],'\v\d+$').'ggzvzz'
 
 " The default value of "opmul" is 0, so change it to 1
