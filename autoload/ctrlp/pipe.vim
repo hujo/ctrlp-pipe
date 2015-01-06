@@ -45,9 +45,10 @@ function! s:parseCmdLine(line) abort "{{{
   "   input --> body --- pats
   "     pats = [[mode, expr], [mode, expr]]
 endfunction "}}}
-function! s:getWithTypeOfB(dict, key, B) abort "{{{
+function! s:getWithType(dict, key, B, ...) abort "{{{
   let val = get(a:dict, a:key, a:B)
-  return type(val) is type(a:B) ? val : a:B
+  return !a:0 ? type(val) is type(a:B) ? val : a:B
+  \           : type(val) isnot type(a:B) ? val : a:B
 endfunction "}}}
 
 if !exists('s:ID') " INIT {{{
@@ -61,12 +62,12 @@ if !exists('s:ID') " INIT {{{
   \ 'lname' : 'pipe',
   \ 'nolim' : 1,
   \ 'type'  : 'path',
-  \}, 's:getWithTypeOfB(g:, ''ctrlp_pipe_default_'' . v:key, v:val)')
+  \}, 's:getWithType(g:, ''ctrlp_pipe_default_'' . v:key, v:val)')
 
   call add(g:ctrlp_ext_vars, extend(copy(s:pipe_core), s:pipe_opt))
 
   let [s:IDX, s:ID] = [len(g:ctrlp_ext_vars) - 1, g:ctrlp_builtins + len(g:ctrlp_ext_vars)]
-  let [s:LOG, s:TARGET, s:ACTION, s:RETRY, s:COMMAND] = [[], [], [], 0, '']
+  let [s:LOG, s:TARGET, s:ACTION, s:RETRY, s:COMMAND, s:SAVEOPT] = [[], [], [], 0, '', '']
 
 endif "}}}
 
@@ -80,7 +81,8 @@ function! ctrlp#pipe#_target(...) abort "{{{
 endfunction "}}}
 function! ctrlp#pipe#_command(...) abort "{{{
   let cmd = get(s:, 'COMMAND', '')
-  return cmd ==# '' ? '' : 'CtrlPipe ' . cmd
+  return cmd ==# '' ? ''
+  \ : printf('cal ctrlp#pipe#opt(%s) |', s:SAVEOPT) . 'CtrlPipe ' . cmd
 endfunction "}}}
 function! ctrlp#pipe#log(...) abort "{{{
   if a:0 == 1
@@ -108,26 +110,22 @@ function! ctrlp#pipe#exit(...) abort "{{{
   if s:RETRY is 0
     let g:ctrlp_ext_vars[s:IDX] = extend(copy(s:pipe_core), s:pipe_opt)
   endif
+  " ctrlp#call() ?
   let mdata = get(ctrlp#getvar('s:'), 'mdata', [])
   if get(mdata, 1, 0) is s:ID | call remove(mdata, 0, -1) | endif
 endfunction "}}}
-function! ctrlp#pipe#opt( keyOrDict, ... ) abort "{{{
-  if type( a:keyOrDict ) is type('')
-    if !a:0
-      return deepcopy(get(g:ctrlp_ext_vars[s:IDX], a:keyOrDict, ''))
-    endif
-    let [key, val] = [a:keyOrDict, a:1]
-    let oldval = get(g:ctrlp_ext_vars[s:IDX], key, val )
-    if type(oldval) is type(val)
-      let g:ctrlp_ext_vars[s:IDX][key] = val
-    endif
+function! ctrlp#pipe#opt(keyOrDict, ...) abort "{{{
+  let Ext = g:ctrlp_ext_vars[s:IDX]
+  let [trg, t] = [deepcopy(a:keyOrDict), type(a:keyOrDict)]
+  if t is type('')
+    if !a:0 | return deepcopy(get(Ext, trg, '')) | endif
+    let Ext[trg] = s:getWithType(Ext, trg, a:1, 'isnot')
     return a:1
-  elseif type(a:keyOrDict) is type({})
-    for [key, value] in items(a:keyOrDict)
-      call ctrlp#pipe#opt(key, value)
-      unlet! key | unlet! value
-    endfor
+  elseif t is type({})
+    call map(trg, 'ctrlp#pipe#opt(v:key, v:val)')
     return get(a:000, 0, '')
+  elseif t is 0
+    return filter(deepcopy(Ext), '!has_key(s:pipe_core, v:key)')
   endif
   return ''
 endfunction "}}}
@@ -138,7 +136,9 @@ function! ctrlp#pipe#accept(mode, str) abort "{{{
 endfunction "}}}
 function! ctrlp#pipe#read(line) abort "{{{
   let line = substitute(a:line, '\v(\r|\n)$', '', 'g')
-  if !s:RETRY | let s:COMMAND = line | endif
+  if !s:RETRY
+    let [s:COMMAND, s:SAVEOPT] = [line, string(ctrlp#pipe#opt(0))]
+  endif
   " Todo:
   "  See: s:parseCmdLine()
   " let [input, s:TARGET, s:ACTION] = s:parseCmdLine(line)

@@ -179,9 +179,11 @@ function! s:readLine() abort "{{{
   if file !=# s:SFILE && get(g:, 'ctrlp_pipe_file_extend', 0)
     let cmds = s:getCmds(s:SFILE, cmds)
   endif
-  let cmds = s:getCmds(file, cmds)
   let g:ctrlp_pipe_file = file
-  return map( values(cmds), 'v:val.name . "\t" . v:val.comment' )
+  return map(
+  \   ctrlp#pipe#fn#fillSp(values(s:getCmds(file, cmds)), 'name'),
+  \   'v:val.name . "\t" . v:val.comment'
+  \)
 endfunction "}}}
 function! s:L2C(cmdline) "{{{
   return get(s:getCmdWithName(split(a:cmdline)[0]), 'value', '') . "\n"
@@ -244,12 +246,13 @@ This is Commentout
 
 " Sample: {{{2
 " The default value of "type" is "path", so change it to "tabe"
-line/jump :cal ctrlp#pipe#opt({'type': 'tabe'}) |
+Line/jump :cal ctrlp#pipe#opt({'type': 'tabe'}) |
+  " [ehtv] normal ggzvzz
   sort(map(getline(0,'$'),'substitute(v:val, ''\t'', '' '', ''g'')."\t".(v:key+1)'))
     --- exe 'norm' matchstr(S[-1],'\v\d+$').'ggzvzz'
 
 " The default value of "opmul" is 0, so change it to 1
-file/old :cal ctrlp#pipe#opt({'opmul': 1}) |
+File/old :cal ctrlp#pipe#opt({'opmul': 1}) |
   " [ehtv] ctrlp#acceptfile
   " 'opmul': true
   reverse(filter(copy(v:oldfiles),'filereadable(expand(v:val))'))
@@ -257,16 +260,17 @@ file/old :cal ctrlp#pipe#opt({'opmul': 1}) |
 
 " if has('win32') --> enable
 @has('win32')@
-sys/win/reg/query :cal ctrlp#pipe#opt({'type': 'file'}) |
-  " (reg query %s) [t] UP [ehv] DOWN
+Sys/reg/query
+  " [ehv] down [t] up
+  " (reg query %s)
   HKLM --> filter( [S[-1]]
-               + split(system(printf('reg query "%s"',S[-1])), "\n"),
+               + split(system(printf('reg query "%s"',S[-1])), '\v\r\n|\n|\r'),
              'v:val !~# ''\v^\s*$'''
            )
     --- if S[-1] ==# S[-2] | call remove(S, -1) | endif
     --t call remove(S, -2, -1) --- exe C
 
-Filer
+File/Filer
   " [t] lcd (dir)
   " [ehtv] ctrlp#acceptfile
   ./ --> extend(map(glob(S[-1].'*',0,1),
@@ -276,12 +280,34 @@ Filer
               ? get({'t': 'lcd ' . S[-1]}, a:mode, C )
             : ctrlp#acceptfile(a:mode,S[-1])
 
-Redir :call ctrlp#pipe#opt({'type': 'line'}) |
-  " Please input command!
-  _.redir(insert(S, input('input command: ','','command'), 0)[0])
+Vim/redir :call ctrlp#pipe#opt({'type': 'line'}) |
+  " [t] sort
+  " (Please input command!)
+  ctrlp#pipe#fn#redir(insert(S, input('input command: ','','command'), 0)[0])
+  --t let pmt = ctrlp#getvar('s:prompt')[0]
+    | exe 'CtrlPipe sort(' . string(T) . ')'
+    | cal feedkeys(pmt)
+
+Vim/colo :cal ctrlp#pipe#opt({'type': 'tabs'}) |
+  " [e] change colorscheme
+  " [t] toggle background
+  " [hv] ctrlp#acceptfile(a:mode, file)
+  map( ctrlp#pipe#fn#fillSp(
+        map( globpath( &rtp, 'colors/*.vim', 0, 1 )
+      , '[fnamemodify(v:val, '':t:r''), v:val]' )
+    , 0 )
+  ,'join(v:val, "\t")' )
+    --t let &bg = &bg[0] ==# 'l' ? 'dark' : 'light'
+    --e exe 'colo' split(S[-1])[0]
+    --- if a:mode =~# '[et]'
+          | let pmt = ctrlp#pipe#fn#savePmt()
+          | exe C
+          | if pmt !=# '' | exe pmt | endif
+      | else | cal ctrlp#acceptfile(a:mode, split(S[-1], '\v[\t]')[-1]) | endif
 
 Git/grep/e :call ctrlp#pipe#opt({'type': 'tab'}) |
-  " git grep -n -E shellescape(input()) --- [ehtv] ctrlp#acceptfile
+  " [ehtv] ctrlp#acceptfile
+  " (git grep -n -E shellescape(input()))
   map( split( system( printf( 'git grep -n -E %s',
             map( [input('GitGrep: ')], 'v:val ==# '''' ? '''' : shellescape(v:val)' )[0] ) ), "\n" ),
       'join(reverse(split(v:val, ''\v^\f+:\d+\zs:'')), "\t")' )
@@ -290,7 +316,7 @@ Git/grep/e :call ctrlp#pipe#opt({'type': 'tab'}) |
 
 Git/log/diff :cal ctrlp#pipe#opt({'type': 'line'}) |
   " [ehtv] open git diff buffer
-  reverse(systemlist('git log --pretty=format:"%h %s %ad" --date=relative'))
+  reverse(split(iconv(system('git log --pretty=format:"%h %s %ad" --date=relative'), 'utf-8', &enc), '\v\r\n|\n|\r'))
     --e if '' !=# expand('%') | new | else | %delete _ | endif
     --t tabnew --v vnew --h new
     --- call setline(1, systemlist(printf('git diff %s', split(S[-1])[0])))
@@ -299,24 +325,27 @@ Git/log/diff :cal ctrlp#pipe#opt({'type': 'line'}) |
 
 Git/file/ls :cal ctrlp#pipe#opt({'opmul': 1}) |
   " [ehtv] ctrlp#acceptfile
-  " 'opmul': true
+  " [opmul]
   system('git ls-files') --- call ctrlp#acceptfile(a:mode,S[-1])
 
-hist/cmd :cal ctrlp#pipe#opt({'type': 'line'}) |
-  _.redir('his :',1)[1:-2]
-  " [e] execute [h] histdel
+Hist/cmd :cal ctrlp#pipe#opt({'type': 'line'}) |
+  ctrlp#pipe#fn#redir('his :',1)[1:-2]
+  " [e] feedkeys [t] execute [h] histdel
     --- cal add(S,str2nr(split(S[-1])[0]))
-    --h cal histdel(':',S[-1]) | exe C
-    --e exe histget(':',S[-1])
+    --e cal feedkeys(':' . histget(':',S[-1]), 't')
+    --t exe histget(':',S[-1])
+    --h let pmt = ctrlp#pipe#fn#savePmt()
+      | cal histdel(':',S[-1]) | exe C | exe pmt
 
-hist/search :cal ctrlp#pipe#opt({'type': 'line'}) |
-  " [e] /select value [h] histdel
-  _.redir('his /',1)[1:-2]
+Hist/search :cal ctrlp#pipe#opt({'type': 'line'}) |
+  " [e] feedkeys [h] histdel
+  ctrlp#pipe#fn#redir('his /',1)[1:-2]
     --- call add(S,str2nr(split(S[-1])[0]))
     --e cal feedkeys('/' . histget('search', S[-1]), 't')
-    --h cal histdel('/', S[-1]) | exe C
+    --h let pmt = ctrlp#pipe#fn#savePmt()
+      | cal histdel('/',S[-1]) | exe C | exe pmt
 
-Log :cal ctrlp#pipe#opt({'type': 'line', }) |
+Debug/log :cal ctrlp#pipe#opt({'type': 'line', }) |
   " Viewing the error log.
   (len(S) < 2 ? ctrlp#pipe#log() : get(ctrlp#pipe#log(), S[-1], []))
   --- if len(S) > 2 | call remove(S, -1)
