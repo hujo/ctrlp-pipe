@@ -99,8 +99,12 @@ function! ctrlp#pipe#log(...) abort "{{{
   endif
   return deepcopy(s:LOG)
 endfunction "}}}
+function! ctrlp#pipe#id(...) abort "{{{
+  return ctrlp#pipe#read('[""]')
+endfunction "}}}
 function! ctrlp#pipe#init(...) abort "{{{
   let b:ctrlp_clear_cache_on_exit = 1
+  let b:use_caching = 0
   return reverse(copy(s:TARGET))
 endfunction "}}}
 function! ctrlp#pipe#exit(...) abort "{{{

@@ -62,9 +62,8 @@ if get(g:, 'ctrlp_pipe_mapping_disable', 0)
 endif
 
 let s:SFILE = expand('<sfile>:p')
-" s:FILES {{{
-" s:FILES = {
-"   FILEPATH : {
+let s:SOUCES = { s:SFILE : { 'ftime': 0 } } "{{{
+"   'filepath' : {
 "     'ftime': num,
 "     'cmds': {
 "       NAME : {
@@ -75,7 +74,7 @@ let s:SFILE = expand('<sfile>:p')
 "     }
 " }, ...}
 "}}}
-let s:FILES = { s:SFILE : { 'ftime': 0 } }
+
 function! s:cCout(line) abort "{{{
   let expr = matchstr(a:line, '\v^\@\zs.+\ze\@')
   if expr !=# ''
@@ -157,8 +156,8 @@ function! s:getCmds(filepath, ...) abort "{{{
   if !filereadable(file) | return [] | endif
   let ftime = getftime(file)
   let cache = get(
-  \ (!has_key(s:FILES, file)
-  \   ? extend(s:FILES, {file : {'ftime': 0 }}) : s:FILES ),
+  \ (!has_key(s:SOUCES, file)
+  \   ? extend(s:SOUCES, {file : {'ftime': 0 }}) : s:SOUCES ),
   \ file )
   return get(
   \ (cache.ftime < ftime
@@ -169,8 +168,8 @@ function! s:getCmds(filepath, ...) abort "{{{
 endfunction "}}}
 function! s:getCmdWithName(cmdname) abort "{{{
   let file = get(g:, 'ctrlp_pipe_file', '')
-  let cmds = has_key(s:FILES, file)
-  \        ? get(s:FILES[file], 'cmds', {}) : {}
+  let cmds = has_key(s:SOUCES, file)
+  \        ? get(s:SOUCES[file], 'cmds', {}) : {}
   return get(cmds, a:cmdname, {})
 endfunction "}}}
 function! s:readLine() abort "{{{
@@ -191,7 +190,7 @@ endfunction "}}}
 
 nnoremap <silent><plug>(ctrlp-pipe)
 \   :<c-u>call ctrlp#pipe#opt({'type': 'tabs'})
-\     <bar>CtrlPipe sort(<sid>readLine())
+\     <bar>CtrlPipe reverse(sort(<sid>readLine()))
 \     --- call ctrlp#pipe#exit(1) <bar> exe <sid>L2C(S[-1])<cr>
 
 let &cpoptions = s:save_cpo
@@ -256,7 +255,8 @@ File/old :cal ctrlp#pipe#opt({'opmul': 1}) |
   " [ehtv] ctrlp#acceptfile
   " 'opmul': true
   reverse(filter(copy(v:oldfiles),'filereadable(expand(v:val))'))
-    --- call ctrlp#acceptfile(a:mode,S[-1])
+    --- let pmt = ctrlp#pipe#fn#savePmt()
+      | call ctrlp#acceptfile(a:mode,S[-1]) | exe C | exe pmt
 
 " if has('win32') --> enable
 @has('win32')@
@@ -271,24 +271,29 @@ Sys/reg/query
     --t call remove(S, -2, -1) --- exe C
 
 File/Filer
-  " [t] lcd (dir)
+  " [t] (dir ? lcd : ctrlp#acceptfile)
   " [ehtv] ctrlp#acceptfile
-  ./ --> extend(map(glob(S[-1].'*',0,1),
-          'fnamemodify(v:val,'':t'') . (isdirectory(v:val) ? ''/'' : '''')'
-         ), ['..', '.'])
-    --- exe isdirectory(get(add(S,fnamemodify(S[-2].S[-1],':p')),-1))
-              ? get({'t': 'lcd ' . S[-1]}, a:mode, C )
-            : ctrlp#acceptfile(a:mode,S[-1])
+  ./ --> extend(reverse(map(glob(S[-1] . '*', 0, 1),
+          'fnamemodify(v:val, '':t'') . (isdirectory(v:val) ? ''/'' : '''')'
+         )), ['..', '.'])
+    --- let pmt = ctrlp#pipe#fn#savePmt()
+      | let file = fnamemodify(join(remove(S, -2 , -1), ''), ':p')
+      | if isdirectory(file)
+      |   if a:mode ==# 't' | lcd `=file` | en
+      |   call add(S, file) | exe C
+      | elseif filereadable(file)
+      |   cal ctrlp#acceptfile(a:mode, file) | exe C | exe pmt
+      | endif
 
 Vim/redir :call ctrlp#pipe#opt({'type': 'line'}) |
   " [t] sort
   " (Please input command!)
   ctrlp#pipe#fn#redir(insert(S, input('input command: ','','command'), 0)[0])
-  --t let pmt = ctrlp#getvar('s:prompt')[0]
+  --t let pmt = ctrlp#pipe#fn#savePmt()
     | exe 'CtrlPipe sort(' . string(T) . ')'
-    | cal feedkeys(pmt)
+    | exe pmt
 
-Vim/colo :cal ctrlp#pipe#opt({'type': 'tabs'}) |
+Vim/color :cal ctrlp#pipe#opt({'type': 'tabs'}) |
   " [e] change colorscheme
   " [t] toggle background
   " [hv] ctrlp#acceptfile(a:mode, file)
@@ -352,17 +357,3 @@ Debug/log :cal ctrlp#pipe#opt({'type': 'line', }) |
              | else | let S[-1] = split(S[-1])[0] | endif
   --t call remove(S, -1)
   --- exe C
-
-
-" Test: {{{2
-@get(g:, 'ctrlp_pipe_debug', 0)@
-TEST_S
-  Test S --> S --- exe C
-
-@get(g:, 'ctrlp_pipe_debug', 0)@
-TEST_T
-  extend(T, S) --- exe C
-
-@get(g:, 'ctrlp_pipe_debug', 0)@
-TEST_ST
-  A --> extend(extend(T, S), T) --t echo S --e exe C
