@@ -313,12 +313,13 @@ Vim/color :cal ctrlp#pipe#opt({'type': 'tabs'}) |
 Git/grep :call ctrlp#pipe#opt({'type': 'line'}) |
   " [ehtv] ctrlp#acceptfile
   " (git grep -n -e shellescape(input()))
-  map( split( system( printf( 'git grep -n -e %s',
-            map( [input('GitGrep: ')], 'v:val ==# '''' ? '''' : shellescape(v:val)' )[0] ) ), "\n" ),
-      'join(reverse(split(v:val, ''\v^\f+:\d+\zs:'')), "\t")' )
+    map(split(system(printf(
+        'git grep --full-name -n -e %s'
+       , map([join(map(split(input('GitGrep: ')), 'shellescape(v:val)'), ' ')], 'v:val ==# '''' ? ''.'' : v:val')[0]
+    )), '\v\r\n|\r|\n'), 'join(insert(split(v:val, ''\v^\S+:\d+\zs:''), "\t", 1), "")')
   --- let pmt = ctrlp#pipe#fn#savePmt()
-    | let fline = split(split(S[-1])[-1], ':')
-    | call ctrlp#acceptfile(a:mode, fline[0], fline[1])
+    | let fline = split(split(S[-1])[0], '\v^\S+\zs:\ze\d+')
+    | call ctrlp#acceptfile(a:mode, matchstr(system('git rev-parse --show-toplevel'), '\v\f+') . '/' . fline[0], fline[-1])
     | exe join([split(C, '\vCtrlPip' . 'e\zs\s')[0], 'T', '--- ' . split(C, '\s--' . '-\zs\s')[-1]])
     | call feedkeys(pmt)
 
