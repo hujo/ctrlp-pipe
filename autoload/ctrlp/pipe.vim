@@ -50,6 +50,14 @@ function! s:getWithType(dict, key, B, ...) abort "{{{
   return !a:0 ? type(val) is type(a:B) ? val : a:B
   \           : type(val) isnot type(a:B) ? val : a:B
 endfunction "}}}
+function! s:trashBuf() "{{{
+  let cbnr = bufnr('$')
+  for bnr in range(1, cbnr - 1)
+    if getbufvar(bnr, 'ctrlp_pipe_buffer') is 1
+      exe bnr . 'bwipeout!'
+    endif
+  endfor
+endfunction "}}}
 
 if !exists('s:ID') " INIT {{{
   let s:pipe_core =  {
@@ -103,8 +111,7 @@ function! ctrlp#pipe#id(...) abort "{{{
   return ctrlp#pipe#read('[""]')
 endfunction "}}}
 function! ctrlp#pipe#init(...) abort "{{{
-  let b:ctrlp_clear_cache_on_exit = 1
-  let b:use_caching = 0
+  let b:ctrlp_pipe_buffer = 1
   return reverse(copy(s:TARGET))
 endfunction "}}}
 function! ctrlp#pipe#exit(...) abort "{{{
@@ -117,6 +124,7 @@ function! ctrlp#pipe#exit(...) abort "{{{
   " ctrlp#call() ?
   let mdata = get(ctrlp#getvar('s:'), 'mdata', [])
   if get(mdata, 1, 0) is s:ID | call remove(mdata, 0, -1) | endif
+  call s:trashBuf()
 endfunction "}}}
 function! ctrlp#pipe#opt(keyOrDict, ...) abort "{{{
   let Ext = g:ctrlp_ext_vars[s:IDX]

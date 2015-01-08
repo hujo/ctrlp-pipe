@@ -256,7 +256,7 @@ File/old :cal ctrlp#pipe#opt({'opmul': 1}) |
   " 'opmul': true
   reverse(filter(copy(v:oldfiles),'filereadable(expand(v:val))'))
     --- let pmt = ctrlp#pipe#fn#savePmt()
-      | call ctrlp#acceptfile(a:mode,S[-1]) | exe C | exe pmt
+      | call ctrlp#acceptfile(a:mode,S[-1]) | exe C | cal feedkeys(pmt)
 
 " if has('win32') --> enable
 @has('win32')@
@@ -282,7 +282,7 @@ File/Filer
       |   if a:mode ==# 't' | lcd `=file` | en
       |   call add(S, file) | exe C
       | elseif filereadable(file)
-      |   cal ctrlp#acceptfile(a:mode, file) | exe C | exe pmt
+      |     cal ctrlp#acceptfile(a:mode, file) | exe C | cal feedkeys(pmt)
       | endif
 
 Vim/redir :call ctrlp#pipe#opt({'type': 'line'}) |
@@ -291,7 +291,7 @@ Vim/redir :call ctrlp#pipe#opt({'type': 'line'}) |
   ctrlp#pipe#fn#redir(insert(S, input('input command: ','','command'), 0)[0])
   --t let pmt = ctrlp#pipe#fn#savePmt()
     | exe 'CtrlPipe sort(' . string(T) . ')'
-    | exe pmt
+    | cal feedkeys(pmt)
 
 Vim/color :cal ctrlp#pipe#opt({'type': 'tabs'}) |
   " [e] change colorscheme
@@ -307,7 +307,7 @@ Vim/color :cal ctrlp#pipe#opt({'type': 'tabs'}) |
     --- if a:mode =~# '[et]'
           | let pmt = ctrlp#pipe#fn#savePmt()
           | exe C
-          | if pmt !=# '' | exe pmt | endif
+          | if pmt !=# '' | cal feedkeys(pmt) | endif
       | else | cal ctrlp#acceptfile(a:mode, split(S[-1], '\v[\t]')[-1]) | endif
 
 Git/grep/e :call ctrlp#pipe#opt({'type': 'tab'}) |
@@ -340,7 +340,7 @@ Hist/cmd :cal ctrlp#pipe#opt({'type': 'line'}) |
     --e cal feedkeys(':' . histget(':',S[-1]), 't')
     --t exe histget(':',S[-1])
     --h let pmt = ctrlp#pipe#fn#savePmt()
-      | cal histdel(':',S[-1]) | exe C | exe pmt
+      | cal histdel(':',S[-1]) | exe C | cal feedkeys(pmt)
 
 Hist/search :cal ctrlp#pipe#opt({'type': 'line'}) |
   " [e] feedkeys [h] histdel
@@ -348,7 +348,7 @@ Hist/search :cal ctrlp#pipe#opt({'type': 'line'}) |
     --- call add(S,str2nr(split(S[-1])[0]))
     --e cal feedkeys('/' . histget('search', S[-1]), 't')
     --h let pmt = ctrlp#pipe#fn#savePmt()
-      | cal histdel('/',S[-1]) | exe C | exe pmt
+      | cal histdel('/',S[-1]) | exe C | cal feedkeys(pmt)
 
 Debug/log :cal ctrlp#pipe#opt({'type': 'line', }) |
   " Viewing the error log.
