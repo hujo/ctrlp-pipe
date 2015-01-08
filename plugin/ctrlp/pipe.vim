@@ -310,14 +310,17 @@ Vim/color :cal ctrlp#pipe#opt({'type': 'tabs'}) |
           | if pmt !=# '' | cal feedkeys(pmt) | endif
       | else | cal ctrlp#acceptfile(a:mode, split(S[-1], '\v[\t]')[-1]) | endif
 
-Git/grep/e :call ctrlp#pipe#opt({'type': 'tab'}) |
+Git/grep :call ctrlp#pipe#opt({'type': 'line'}) |
   " [ehtv] ctrlp#acceptfile
-  " (git grep -n -E shellescape(input()))
-  map( split( system( printf( 'git grep -n -E %s',
+  " (git grep -n -e shellescape(input()))
+  map( split( system( printf( 'git grep -n -e %s',
             map( [input('GitGrep: ')], 'v:val ==# '''' ? '''' : shellescape(v:val)' )[0] ) ), "\n" ),
       'join(reverse(split(v:val, ''\v^\f+:\d+\zs:'')), "\t")' )
-  --- call call( 'ctrlp#acceptfile',
-        [a:mode] + split( split( S[-1] )[-1], '\v:\ze\d+$' ) )
+  --- let pmt = ctrlp#pipe#fn#savePmt()
+    | let fline = split(split(S[-1])[-1], ':')
+    | call ctrlp#acceptfile(a:mode, fline[0], fline[1])
+    | exe join([split(C, '\vCtrlPip' . 'e\zs\s')[0], 'T', '--- ' . split(C, '\s--' . '-\zs\s')[-1]])
+    | call feedkeys(pmt)
 
 Git/log/diff :cal ctrlp#pipe#opt({'type': 'line'}) |
   " [ehtv] open git diff buffer
