@@ -66,11 +66,12 @@ if !exists('s:ID') " INIT {{{
   \ 'exit'  : 'ctrlp#pipe#exit()',
   \ 'sname' : 'pipe',
   \}
-  let s:pipe_opt = map({
+  let s:pipe_opt = {
   \ 'lname' : 'pipe',
   \ 'nolim' : 1,
   \ 'type'  : 'path',
-  \}, 's:getWithType(g:, ''ctrlp_pipe_default_'' . v:key, v:val)')
+  \ 'opmul' : 0
+  \}
 
   call add(g:ctrlp_ext_vars, extend(copy(s:pipe_core), s:pipe_opt))
 
@@ -117,24 +118,29 @@ endfunction "}}}
 function! ctrlp#pipe#exit(...) abort "{{{
   if a:0 && a:1 is 1
     let [s:RETRY, s:TARGET] = [0, []]
-  endif
-  if s:RETRY is 0
-    let g:ctrlp_ext_vars[s:IDX] = extend(copy(s:pipe_core), s:pipe_opt)
+    call ctrlp#pipe#optReset()
   endif
   " ctrlp#call() ?
   let mdata = get(ctrlp#getvar('s:'), 'mdata', [])
   if get(mdata, 1, 0) is s:ID | call remove(mdata, 0, -1) | endif
   call s:trashBuf()
 endfunction "}}}
+function! ctrlp#pipe#optReset() abort "{{{
+  let g:ctrlp_ext_vars[s:IDX] = extend(copy(s:pipe_core), s:pipe_opt)
+endfunction "}}}
 function! ctrlp#pipe#opt(keyOrDict, ...) abort "{{{
   let Ext = g:ctrlp_ext_vars[s:IDX]
   let [trg, t] = [deepcopy(a:keyOrDict), type(a:keyOrDict)]
   if t is type('')
     if !a:0 | return deepcopy(get(Ext, trg, '')) | endif
+    if a:0 is 1
+      call ctrlp#pipe#optReset()
+    endif
     let Ext[trg] = s:getWithType(Ext, trg, a:1, 'isnot')
     return a:1
   elseif t is type({})
-    call map(trg, 'ctrlp#pipe#opt(v:key, v:val)')
+    call ctrlp#pipe#optReset()
+    call map(trg, 'ctrlp#pipe#opt(v:key, v:val, ''noreset'')')
     return get(a:000, 0, '')
   elseif t is 0
     return filter(deepcopy(Ext), '!has_key(s:pipe_core, v:key)')

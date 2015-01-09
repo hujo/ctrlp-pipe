@@ -55,6 +55,8 @@ if get(g:, 'ctrlp_pipe_disable', 0)
 endif
 
 command! -complete=expression -nargs=* CtrlPipe call ctrlp#init(ctrlp#pipe#read(<q-args>))
+"Todo:
+"command! -complete=customlist, -nargs=? CtrlPipeDispatch
 
 if get(g:, 'ctrlp_pipe_mapping_disable', 0)
   let &cpoptions = s:save_cpo

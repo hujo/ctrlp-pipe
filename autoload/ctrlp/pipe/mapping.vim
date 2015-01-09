@@ -137,5 +137,12 @@ function! ctrlp#pipe#mapping#register() "{{{
 endfunction "}}}
 
 function! ctrlp#pipe#mapping#getCmd(name) "{{{
+  if empty(s:getCmdWithName(a:name)) | call s:readLine() | endif
   return get(s:getCmdWithName(a:name), 'value', '')
+endfunction "}}}
+
+function! ctrlp#pipe#mapping#getCmdNS() "{{{
+  if empty(s:getCmdWithName(a:name)) | call s:readLine() | endif
+  " Todo:
+  "return deepcopy()
 endfunction "}}}

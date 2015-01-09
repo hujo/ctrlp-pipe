@@ -21,15 +21,19 @@ endfunction "}}}
 function! ctrlp#pipe#fn#fillSp(itemList, label, ...) "{{{
   let [o, k] = [deepcopy(a:itemList), a:label]
   for i in range(len(o))
-    let o[i][k] = substitute(o[i][k], '\v^\s+|\s+$', '', 'g')
+    if get(o[i], k)
+      let o[i][k] = substitute(o[i][k], '\v^\s+|\s+$', '', 'g')
+    endif
   endfor
   let ls = map(copy(o),
   \     (exists('*strdisplaywidth')
   \       ? 'strdisplaywidth' : 'strlen')
-  \     . '(v:val[k])')
+  \     . '(get(v:val, k, ''''))')
   let mx = max(ls)
   for i in range(len(o))
-    let o[i][k] = o[i][k] . repeat(' ', mx - ls[i])
+    if get(o[i], k)
+      let o[i][k] = o[i][k] . repeat(' ', mx - ls[i])
+    endif
   endfor
-  return !a:0 ? o : map(range(a:0), 'ctrlp#pipe#fn#fillSp(o, a:000[v:key])')[-1]
+  return !a:0 ? o : get(map(range(a:0), 'ctrlp#pipe#fn#fillSp(o, a:000[v:key])'), -1, [])
 endfunction "}}}
