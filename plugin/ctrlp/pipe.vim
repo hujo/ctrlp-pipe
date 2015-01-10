@@ -178,22 +178,23 @@ Vim/color :cal ctrlp#pipe#opt({'type': 'tabs'}) |
     --t let &bg = &bg[0] ==# 'l' ? 'dark' : 'light'
     --e exe 'colo' split(S[-1])[0]
     --- if a:mode =~# '[et]'
-          | let pmt = ctrlp#pipe#fn#savePmt()
-          | exe C
-          | if pmt !=# '' | cal feedkeys(pmt) | endif
+      |   let pmt = ctrlp#pipe#fn#savePmt()
+      |   exe C
+      |   if pmt !=# '' | cal feedkeys(pmt) | endif
       | else | cal ctrlp#acceptfile(a:mode, split(S[-1], '\v[\t]')[-1]) | endif
 
 Git/grep :call ctrlp#pipe#opt({'type': 'line'}) |
   " [ehtv] ctrlp#acceptfile
-  " (git grep -n -e shellescape(input()))
+  " (git grep -n -e input toplevel)
     map(split(system(printf(
-        'git grep --full-name -n -e %s'
+        'git grep --full-name -n -e %s %s'
        , map([join(map(split(input('GitGrep: ')), 'shellescape(v:val)'), ' ')], 'v:val ==# '''' ? ''.'' : v:val')[0]
+       , shellescape(insert(S, matchstr(system('git rev-parse --show-toplevel'), '\v\f+') . '/', 0)[0])
     )), '\v\r\n|\r|\n'), 'join(insert(split(v:val, ''\v^\S+:\d+\zs:''), "\t", 1), "")')
   --- let pmt = ctrlp#pipe#fn#savePmt()
     | let fline = split(split(S[-1])[0], '\v^\S+\zs:\ze\d+')
-    | call ctrlp#acceptfile(a:mode, matchstr(system('git rev-parse --show-toplevel'), '\v\f+') . '/' . fline[0], fline[-1])
-    | exe join([split(C, '\vCtrlPip' . 'e\zs\s')[0], 'T', '--- ' . split(C, '\s--' . '-\zs\s')[-1]])
+    | call ctrlp#acceptfile(a:mode, S[0] . fline[0], fline[-1])
+    | exe join([split(C, '\vCtrlPip' . 'e\zs\s')[0], S[0] . ' -->', 'T', '--- ' . split(C, '\s--' . '-\zs\s')[-1]])
     | call feedkeys(pmt)
 
 Git/log/diff :cal ctrlp#pipe#opt({'type': 'line'}) |
@@ -211,26 +212,18 @@ Git/file/ls :cal ctrlp#pipe#opt({'opmul': 1}) |
   system('git ls-files') --- call ctrlp#acceptfile(a:mode,S[-1])
 
 Hist/cmd :cal ctrlp#pipe#opt({'type': 'line'}) |
-  ctrlp#pipe#fn#redir('his :',1)[1:-2]
+  ctrlp#pipe#fn#redir('his :',1)[1:-1]
   " [e] feedkeys [t] execute [h] histdel
-    --- cal add(S,str2nr(split(S[-1])[0]))
+    --- cal add(S,str2nr(matchstr(S[-1], '\v\d+')))
     --e cal feedkeys(':' . histget(':',S[-1]), 't')
-    --t exe histget(':',S[-1])
+    --t unsilent exe histget(':',S[-1])
     --h let pmt = ctrlp#pipe#fn#savePmt()
       | cal histdel(':',S[-1]) | exe C | cal feedkeys(pmt)
 
 Hist/search :cal ctrlp#pipe#opt({'type': 'line'}) |
   " [e] feedkeys [h] histdel
-  ctrlp#pipe#fn#redir('his /',1)[1:-2]
-    --- call add(S,str2nr(split(S[-1])[0]))
+  ctrlp#pipe#fn#redir('his /',1)[1:-1]
+    --- call add(S,str2nr(matchstr(S[-1], '\v\d+')))
     --e cal feedkeys('/' . histget('search', S[-1]), 't')
     --h let pmt = ctrlp#pipe#fn#savePmt()
       | cal histdel('/',S[-1]) | exe C | cal feedkeys(pmt)
-
-Debug/log :cal ctrlp#pipe#opt({'type': 'line', }) |
-  " Viewing the error log.
-  (len(S) < 2 ? ctrlp#pipe#log() : get(ctrlp#pipe#log(), S[-1], []))
-  --- if len(S) > 2 | call remove(S, -1)
-             | else | let S[-1] = split(S[-1])[0] | endif
-  --t call remove(S, -1)
-  --- exe C
