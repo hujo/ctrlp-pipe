@@ -17,8 +17,10 @@ function! ctrlp#pipe#expr#eval(...) abort "{{{
 endfunction "}}}
 function! ctrlp#pipe#expr#items() abort "{{{
   let ret = {}
-  let ret._ = type(get(g:, 'ctrlp_pipe_module', 0)) is type({})
-  \         ? deepcopy(g:ctrlp_pipe_module) : {'redir': function('ctrlp#pipe#fn#redir')}
+  let ret._ = {'redir': function('ctrlp#pipe#fn#redir')}
+  if type(get(g:, 'ctrlp_pipe_module', 0)) is type({})
+    call extend(ret._, g:ctrlp_pipe_module)
+  endif
   let ret.S = ctrlp#pipe#_selection()
   let ret.T = ctrlp#pipe#_target()
   let ret.C = ctrlp#pipe#_command()

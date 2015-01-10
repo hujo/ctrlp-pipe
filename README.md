@@ -39,9 +39,9 @@ Variable `C`, `S`, `T` and `_` can be used in the A and B.
 
 String is evaluated as a string. do not need to be enclosed in quotes.
 
-S is initialized with `['String']`.  
-Also, if S has become empty, S will be `['String']`.  
-The initial value of the S of case you did not describe the String is `['']`.
+`S` is initialized with `['String']`.  
+Also, if `S` has become empty, S will be `['String']`.  
+The initial value of the `S` of case you did not describe the String is `['']`.
 
 ------------------------------------------------------------------------------
 ### Introduction
@@ -75,7 +75,7 @@ Using the `C` then configure the loop. `<C-t>` Check the scope.
 
 Behaves like ctrlp-line.
 
-    :CtrlPipe sort(map(getline(0, '$'), 'v:val."\t".(v:key+1)')) --- exe 'normal!' split(S[-1], '\t')[-1] . 'ggzvzz'
+  :CtrlPipe sort(map(getline(0,'$'),'v:val."\t:".(v:key+1)')) --- exe ctrlp#pipe#savePmt() | exe 'norm!' matchstr(S[-1],'\v\d+$') . 'ggzvzz' | exe C
 
 
 ------------------------------------------------------------------------------
