@@ -117,11 +117,11 @@ This is Commentout
 
 
 " Sample: {{{2
-" The default value of "type" is "path", so change it to "tabe"
-Line/jump :cal ctrlp#pipe#opt({'type': 'tabe'}) |
+" The default value of "type" is "path", so change it to "line"
+Line/jump :cal ctrlp#pipe#opt({'type': 'line'}) |
   " [ehtv] normal ggzvzz
-  sort(map(getline(0,'$'),'substitute(v:val, ''\t'', '' '', ''g'')."\t".(v:key+1)'))
-    --- exe 'norm' matchstr(S[-1],'\v\d+$').'ggzvzz'
+  sort(map(getline(0,'$'),'substitute(v:val, ''\t'', '' '', ''g'')."\t:".(v:key+1)'))
+    --- exe ctrlp#pipe#savePmt() | exe 'norm!' matchstr(S[-1],'\v\d+$') . 'ggzvzz' | exe C
 
 " The default value of "opmul" is 0, so change it to 1
 File/old :cal ctrlp#pipe#opt({'opmul': 1}) |
