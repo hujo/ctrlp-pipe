@@ -128,8 +128,7 @@ File/old :cal ctrlp#pipe#opt({'opmul': 1}) |
   " [ehtv] ctrlp#acceptfile
   " 'opmul': true
   reverse(filter(copy(v:oldfiles),'filereadable(expand(v:val))'))
-    --- let pmt = ctrlp#pipe#fn#savePmt()
-      | call ctrlp#acceptfile(a:mode,S[-1]) | exe C | cal feedkeys(pmt)
+    --- cal ctrlp#pipe#savePmt() | cal ctrlp#acceptfile(a:mode,S[-1]) | exe C
 
 " if has('win32') --> enable
 @has('win32')@
@@ -149,22 +148,21 @@ File/Filer
   ./ --> extend(reverse(map(glob(S[-1] . '*', 0, 1),
           'fnamemodify(v:val, '':t'') . (isdirectory(v:val) ? ''/'' : '''')'
          )), ['..', '.'])
-    --- let pmt = ctrlp#pipe#fn#savePmt()
-      | let file = fnamemodify(join(remove(S, -2 , -1), ''), ':p')
+    --- let file = fnamemodify(join(remove(S, -2 , -1), ''), ':p')
       | if isdirectory(file)
       |   if a:mode ==# 't' | lcd `=file` | en
-      |   call add(S, file) | exe C
+      |   cal add(S, file) | exe C
       | elseif filereadable(file)
-      |     cal ctrlp#acceptfile(a:mode, file) | exe C | cal feedkeys(pmt)
+      |   cal ctrlp#pipe#savePmt()
+      |   cal ctrlp#acceptfile(a:mode, file) | exe C
       | endif
 
 Vim/redir :call ctrlp#pipe#opt({'type': 'line'}) |
   " [t] sort
   " (Please input command!)
   ctrlp#pipe#fn#redir(insert(S, input('input command: ','','command'), 0)[0])
-  --t let pmt = ctrlp#pipe#fn#savePmt()
+  --t call ctrlp#pipe#savePmt()
     | exe 'CtrlPipe sort(' . string(T) . ')'
-    | cal feedkeys(pmt)
 
 Vim/color :cal ctrlp#pipe#opt({'type': 'tabs'}) |
   " [e] change colorscheme
@@ -178,9 +176,7 @@ Vim/color :cal ctrlp#pipe#opt({'type': 'tabs'}) |
     --t let &bg = &bg[0] ==# 'l' ? 'dark' : 'light'
     --e exe 'colo' split(S[-1])[0]
     --- if a:mode =~# '[et]'
-      |   let pmt = ctrlp#pipe#fn#savePmt()
-      |   exe C
-      |   if pmt !=# '' | cal feedkeys(pmt) | endif
+      |   cal ctrlp#pipe#savePmt() | exe C
       | else | cal ctrlp#acceptfile(a:mode, split(S[-1], '\v[\t]')[-1]) | endif
 
 Git/grep :call ctrlp#pipe#opt({'type': 'line'}) |
@@ -191,11 +187,10 @@ Git/grep :call ctrlp#pipe#opt({'type': 'line'}) |
        , map([join(map(split(input('GitGrep: ')), 'shellescape(v:val)'), ' ')], 'v:val ==# '''' ? ''.'' : v:val')[0]
        , shellescape(insert(S, matchstr(system('git rev-parse --show-toplevel'), '\v\f+') . '/', 0)[0])
     )), '\v\r\n|\r|\n'), 'join(insert(split(v:val, ''\v^\S+:\d+\zs:''), "\t", 1), "")')
-  --- let pmt = ctrlp#pipe#fn#savePmt()
+  --- cal ctrlp#pipe#savePmt()
     | let fline = split(split(S[-1])[0], '\v^\S+\zs:\ze\d+')
-    | call ctrlp#acceptfile(a:mode, S[0] . fline[0], fline[-1])
+    | cal ctrlp#acceptfile(a:mode, S[0] . fline[0], fline[-1])
     | exe join([split(C, '\vCtrlPip' . 'e\zs\s')[0], S[0] . ' -->', 'T', '--- ' . split(C, '\s--' . '-\zs\s')[-1]])
-    | call feedkeys(pmt)
 
 Git/log/diff :cal ctrlp#pipe#opt({'type': 'line'}) |
   " [ehtv] open git diff buffer
@@ -209,7 +204,7 @@ Git/log/diff :cal ctrlp#pipe#opt({'type': 'line'}) |
 Git/file/ls :cal ctrlp#pipe#opt({'opmul': 1}) |
   " [ehtv] ctrlp#acceptfile
   " [opmul]
-  system('git ls-files') --- call ctrlp#acceptfile(a:mode,S[-1])
+  system('git ls-files') --- cal ctrlp#acceptfile(a:mode,S[-1])
 
 Hist/cmd :cal ctrlp#pipe#opt({'type': 'line'}) |
   ctrlp#pipe#fn#redir('his :',1)[1:-1]
@@ -217,13 +212,11 @@ Hist/cmd :cal ctrlp#pipe#opt({'type': 'line'}) |
     --- cal add(S,str2nr(matchstr(S[-1], '\v\d+')))
     --e cal feedkeys(':' . histget(':',S[-1]), 't')
     --t unsilent exe histget(':',S[-1])
-    --h let pmt = ctrlp#pipe#fn#savePmt()
-      | cal histdel(':',S[-1]) | exe C | cal feedkeys(pmt)
+    --h cal ctrlp#pipe#savePmt() | cal histdel(':',S[-1]) | exe C
 
 Hist/search :cal ctrlp#pipe#opt({'type': 'line'}) |
   " [e] feedkeys [h] histdel
   ctrlp#pipe#fn#redir('his /',1)[1:-1]
     --- call add(S,str2nr(matchstr(S[-1], '\v\d+')))
     --e cal feedkeys('/' . histget('search', S[-1]), 't')
-    --h let pmt = ctrlp#pipe#fn#savePmt()
-      | cal histdel('/',S[-1]) | exe C | cal feedkeys(pmt)
+    --h cal ctrlp#pipe#savePmt() | cal histdel('/',S[-1]) | exe C

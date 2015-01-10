@@ -59,7 +59,7 @@ function! s:trashBuf() "{{{
   endfor
 endfunction "}}}
 
-if !exists('s:ID') " INIT {{{
+if !exists('s:ID') " {{{
   let s:pipe_core =  {
   \ 'init'  : 'ctrlp#pipe#init()',
   \ 'accept': 'ctrlp#pipe#accept',
@@ -74,9 +74,9 @@ if !exists('s:ID') " INIT {{{
   \}
 
   call add(g:ctrlp_ext_vars, extend(copy(s:pipe_core), s:pipe_opt))
+  let [s:IDX, s:ID, s:LOG] = [len(g:ctrlp_ext_vars) - 1, g:ctrlp_builtins + len(g:ctrlp_ext_vars), []]
 
-  let [s:IDX, s:ID] = [len(g:ctrlp_ext_vars) - 1, g:ctrlp_builtins + len(g:ctrlp_ext_vars)]
-  let [s:LOG, s:TARGET, s:ACTION, s:RETRY, s:COMMAND, s:SAVEOPT] = [[], [], [], 0, '', '']
+  let [s:TARGET, s:ACTION, s:RETRY, s:COMMAND, s:SAVEOPT, s:SAVEPMT] = [[], [], 0, '', '', '']
 
 endif "}}}
 
@@ -113,6 +113,9 @@ function! ctrlp#pipe#id(...) abort "{{{
 endfunction "}}}
 function! ctrlp#pipe#init(...) abort "{{{
   let b:ctrlp_pipe_buffer = 1
+  if s:SAVEPMT !=# ''
+    call extend(ctrlp#getvar('s:'), {'deftxt': s:SAVEPMT})
+  endif
   return reverse(copy(s:TARGET))
 endfunction "}}}
 function! ctrlp#pipe#exit(...) abort "{{{
@@ -127,6 +130,9 @@ function! ctrlp#pipe#exit(...) abort "{{{
 endfunction "}}}
 function! ctrlp#pipe#optReset() abort "{{{
   let g:ctrlp_ext_vars[s:IDX] = extend(copy(s:pipe_core), s:pipe_opt)
+endfunction "}}}
+function! ctrlp#pipe#savePmt() "{{{
+  let s:SAVEPMT = get(ctrlp#getvar('s:prompt'), 0, '')
 endfunction "}}}
 function! ctrlp#pipe#opt(keyOrDict, ...) abort "{{{
   let Ext = g:ctrlp_ext_vars[s:IDX]
@@ -155,7 +161,7 @@ endfunction "}}}
 function! ctrlp#pipe#read(line) abort "{{{
   let line = substitute(a:line, '\v(\r|\n)$', '', 'g')
   if !s:RETRY
-    let [s:COMMAND, s:SAVEOPT] = [line, string(ctrlp#pipe#opt(0))]
+    let [s:COMMAND, s:SAVEOPT, s:SAVEPMT] = [line, string(ctrlp#pipe#opt(0)), '']
   endif
   " Todo:
   "  See: s:parseCmdLine()
@@ -177,7 +183,7 @@ function! ctrlp#pipe#read(line) abort "{{{
   endfor
   unlet! tmp
   " }}}
-  if !s:RETRY || !exists('s:SELECTION') || empty(s:SELECTION)
+  if !s:RETRY || empty(s:SELECTION)
     let s:SELECTION = [input]
   endif
   " {{{

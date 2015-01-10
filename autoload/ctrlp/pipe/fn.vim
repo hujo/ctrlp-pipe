@@ -15,9 +15,6 @@ function! ctrlp#pipe#fn#redir(expr, ...) abort "{{{
   call ctrlp#pipe#redir#e()
   return a:0 && a:1 is 1 ? split(ret, '\v\r\n|\n|\r') : ret
 endfunction "}}}
-function! ctrlp#pipe#fn#savePmt(...) "{{{
-  return join(ctrlp#getvar('s:prompt'), '')
-endfunction "}}}
 function! ctrlp#pipe#fn#fillSp(itemList, label, ...) "{{{
   let [o, k] = [deepcopy(a:itemList), a:label]
   for i in range(len(o))
