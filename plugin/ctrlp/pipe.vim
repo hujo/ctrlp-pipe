@@ -128,7 +128,7 @@ File/old :cal ctrlp#pipe#opt({'opmul': 1}) |
   " [ehtv] ctrlp#acceptfile
   " 'opmul': true
   reverse(filter(copy(v:oldfiles),'filereadable(expand(v:val))'))
-    --- cal ctrlp#pipe#savePmt() | cal ctrlp#acceptfile(a:mode,S[-1]) | exe C
+    --- exe ctrlp#pipe#savePmt() | cal ctrlp#acceptfile(a:mode,S[-1]) | exe C
 
 " if has('win32') --> enable
 @has('win32')@
@@ -153,7 +153,7 @@ File/Filer
       |   if a:mode ==# 't' | lcd `=file` | en
       |   cal add(S, file) | exe C
       | elseif filereadable(file)
-      |   cal ctrlp#pipe#savePmt()
+      |   exe ctrlp#pipe#savePmt()
       |   cal ctrlp#acceptfile(a:mode, file) | exe C
       | endif
 
@@ -161,7 +161,7 @@ Vim/redir :call ctrlp#pipe#opt({'type': 'line'}) |
   " [t] sort
   " (Please input command!)
   ctrlp#pipe#fn#redir(insert(S, input('input command: ','','command'), 0)[0])
-  --t call ctrlp#pipe#savePmt()
+  --t exe ctrlp#pipe#savePmt()
     | exe 'CtrlPipe sort(' . string(T) . ')'
 
 Vim/color :cal ctrlp#pipe#opt({'type': 'tabs'}) |
@@ -176,7 +176,7 @@ Vim/color :cal ctrlp#pipe#opt({'type': 'tabs'}) |
     --t let &bg = &bg[0] ==# 'l' ? 'dark' : 'light'
     --e exe 'colo' split(S[-1])[0]
     --- if a:mode =~# '[et]'
-      |   cal ctrlp#pipe#savePmt() | exe C
+      |   exe ctrlp#pipe#savePmt() | exe C
       | else | cal ctrlp#acceptfile(a:mode, split(S[-1], '\v[\t]')[-1]) | endif
 
 Git/grep :call ctrlp#pipe#opt({'type': 'line'}) |
@@ -187,7 +187,7 @@ Git/grep :call ctrlp#pipe#opt({'type': 'line'}) |
        , map([join(map(split(input('GitGrep: ')), 'shellescape(v:val)'), ' ')], 'v:val ==# '''' ? ''.'' : v:val')[0]
        , shellescape(insert(S, matchstr(system('git rev-parse --show-toplevel'), '\v\f+') . '/', 0)[0])
     )), '\v\r\n|\r|\n'), 'join(insert(split(v:val, ''\v^\S+:\d+\zs:''), "\t", 1), "")')
-  --- cal ctrlp#pipe#savePmt()
+  --- exe ctrlp#pipe#savePmt()
     | let fline = split(split(S[-1])[0], '\v^\S+\zs:\ze\d+')
     | cal ctrlp#acceptfile(a:mode, S[0] . fline[0], fline[-1])
     | exe join([split(C, '\vCtrlPip' . 'e\zs\s')[0], S[0] . ' -->', 'T', '--- ' . split(C, '\s--' . '-\zs\s')[-1]])
@@ -212,11 +212,11 @@ Hist/cmd :cal ctrlp#pipe#opt({'type': 'line'}) |
     --- cal add(S,str2nr(matchstr(S[-1], '\v\d+')))
     --e cal feedkeys(':' . histget(':',S[-1]), 't')
     --t unsilent exe histget(':',S[-1])
-    --h cal ctrlp#pipe#savePmt() | cal histdel(':',S[-1]) | exe C
+    --h exe ctrlp#pipe#savePmt() | cal histdel(':',S[-1]) | exe C
 
 Hist/search :cal ctrlp#pipe#opt({'type': 'line'}) |
   " [e] feedkeys [h] histdel
   ctrlp#pipe#fn#redir('his /',1)[1:-1]
     --- call add(S,str2nr(matchstr(S[-1], '\v\d+')))
     --e cal feedkeys('/' . histget('search', S[-1]), 't')
-    --h cal ctrlp#pipe#savePmt() | cal histdel('/',S[-1]) | exe C
+    --h exe ctrlp#pipe#savePmt() | cal histdel('/',S[-1]) | exe C

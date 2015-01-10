@@ -76,7 +76,12 @@ if !exists('s:ID') " {{{
   call add(g:ctrlp_ext_vars, extend(copy(s:pipe_core), s:pipe_opt))
   let [s:IDX, s:ID, s:LOG] = [len(g:ctrlp_ext_vars) - 1, g:ctrlp_builtins + len(g:ctrlp_ext_vars), []]
 
-  let [s:TARGET, s:ACTION, s:RETRY, s:COMMAND, s:SAVEOPT, s:SAVEPMT] = [[], [], 0, '', '', '']
+  let s:TARGET  = []
+  let s:ACTION  = []
+  let s:RETRY   = 0
+  let s:COMMAND = ''
+  let s:SAVEOPT = ''
+  let s:SAVEPMT = {}
 
 endif "}}}
 
@@ -113,8 +118,8 @@ function! ctrlp#pipe#id(...) abort "{{{
 endfunction "}}}
 function! ctrlp#pipe#init(...) abort "{{{
   let b:ctrlp_pipe_buffer = 1
-  if s:SAVEPMT !=# ''
-    call extend(ctrlp#getvar('s:'), {'deftxt': s:SAVEPMT})
+  if !empty(s:SAVEPMT)
+    call extend(ctrlp#getvar('s:'), s:SAVEPMT)
   endif
   return reverse(copy(s:TARGET))
 endfunction "}}}
@@ -132,7 +137,13 @@ function! ctrlp#pipe#optReset() abort "{{{
   let g:ctrlp_ext_vars[s:IDX] = extend(copy(s:pipe_core), s:pipe_opt)
 endfunction "}}}
 function! ctrlp#pipe#savePmt() "{{{
-  let s:SAVEPMT = get(ctrlp#getvar('s:prompt'), 0, '')
+  let s:SAVEPMT.deftxt = join(ctrlp#getvar('s:prompt'), '')
+  let lnum = 0
+  if has_key(s:SAVEPMT, 'jump_lnum')
+    let lnum = remove(s:SAVEPMT, 'jump_lnum')
+  endif
+  return lnum && ctrlp#getvar('s:nolim')
+  \     ? printf('cal feedkeys(''%dgg'', ''n'')', lnum) : ''
 endfunction "}}}
 function! ctrlp#pipe#opt(keyOrDict, ...) abort "{{{
   let Ext = g:ctrlp_ext_vars[s:IDX]
@@ -154,6 +165,7 @@ function! ctrlp#pipe#opt(keyOrDict, ...) abort "{{{
   return ''
 endfunction "}}}
 function! ctrlp#pipe#accept(mode, str) abort "{{{
+  let s:SAVEPMT.jump_lnum = line('.')
   let s:RETRY = 0 | call ctrlp#exit()
   let s:RETRY = 1 | call s:doExp(a:mode, a:str)
   let s:RETRY = 0 | call ctrlp#pipe#exit()
@@ -161,7 +173,7 @@ endfunction "}}}
 function! ctrlp#pipe#read(line) abort "{{{
   let line = substitute(a:line, '\v(\r|\n)$', '', 'g')
   if !s:RETRY
-    let [s:COMMAND, s:SAVEOPT, s:SAVEPMT] = [line, string(ctrlp#pipe#opt(0)), '']
+    let [s:COMMAND, s:SAVEOPT, s:SAVEPMT] = [line, string(ctrlp#pipe#opt(0)), {}]
   endif
   " Todo:
   "  See: s:parseCmdLine()
