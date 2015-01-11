@@ -79,6 +79,7 @@ if !exists('s:ID') " {{{
   let s:TARGET  = []
   let s:ACTION  = []
   let s:RETRY   = 0
+  let s:MODE    = ''
   let s:COMMAND = ''
   let s:SAVEOPT = ''
   let s:SAVEPMT = {}
@@ -139,7 +140,7 @@ endfunction "}}}
 function! ctrlp#pipe#exeTail(...) abort "{{{
   let tail = ctrlp#call('s:tail')
   if tail !=# ''
-    exe tail[stridx(tail, '+') + 1 :]
+    call ctrlp#pipe#expr#excute(tail[stridx(tail, '+') + 1 :], s:MODE)
   endif
   return a:0 ? a:1 : ''
 endfunction "}}}
@@ -175,6 +176,7 @@ function! ctrlp#pipe#opt(keyOrDict, ...) abort "{{{
 endfunction "}}}
 function! ctrlp#pipe#accept(mode, str) abort "{{{
   let s:SAVEPMT.jump_lnum = line('.')
+  let s:MODE = a:mode
   let s:RETRY = 0 | call ctrlp#exit()
   let s:RETRY = 1 | call s:doExp(a:mode, a:str)
   let s:RETRY = 0 | call ctrlp#pipe#exit()

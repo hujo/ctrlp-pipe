@@ -120,8 +120,9 @@ This is Commentout
 " The default value of "type" is "path", so change it to "line"
 Line/jump :cal ctrlp#pipe#opt({'type': 'line'}) |
   " [ehtv] normal ggzvzz
-  sort(map(getline(0,'$'),'substitute(v:val, ''\t'', '' '', ''g'')."\t:".(v:key+1)'))
-    --- cal ctrlp#pipe#savePmt() | exe 'norm!' matchstr(S[-1],'\v\d+$') . 'ggzvzz' | exe C
+  " 'tail': true
+  sort(map(getline(0,'$'),'v:val."\t:".(v:key+1)'))
+    --- exe 'norm!' matchstr(S[-1],'\v\d+$') . 'ggzvzz' | exe ctrlp#pipe#savePmt(ctrlp#pipe#exeTail(C))
 
 " The default value of "opmul" is 0, so change it to 1
 File/old :cal ctrlp#pipe#opt({'opmul': 1}) |
@@ -143,14 +144,19 @@ Sys/reg/query
     --t call remove(S, -2, -1) --- exe C
 
 File/Filer
-  " [t] (dir ? lcd : ctrlp#acceptfile)
-  " [ehtv] ctrlp#acceptfile
+  " [dir: t] lcd >> tail
+  " [dir: h] lcd >> tail >> lcd -
+  " [file: ehtv] ctrlp#acceptfile
   ./ --> extend(reverse(map(glob(S[-1] . '*', 0, 1),
           'fnamemodify(v:val, '':t'') . (isdirectory(v:val) ? ''/'' : '''')'
          )), ['..', '.'])
     --- let file = fnamemodify(join(remove(S, -2 , -1), ''), ':p')
       | if isdirectory(file)
-      |   if a:mode ==# 't' | lcd `=file` | en
+      |   if a:mode ==# 't' | lcd `=file` | cal ctrlp#pipe#exeTail() | en
+      |   if a:mode ==# 'h'
+      |     let cwd = getcwd()
+      |     lcd `=file` | exe ctrlp#pipe#exeTail(ctrlp#pipe#savePmt('lcd ' . cwd))
+      |   endif
       |   cal add(S, file) | exe C
       | elseif filereadable(file)
       |   cal ctrlp#pipe#savePmt()
@@ -176,7 +182,7 @@ Vim/color :cal ctrlp#pipe#opt({'type': 'tabs'}) |
     --t let &bg = &bg[0] ==# 'l' ? 'dark' : 'light'
     --e exe 'colo' split(S[-1])[0]
     --- if a:mode =~# '[et]'
-      |   cal ctrlp#pipe#savePmt() | exe C
+      |   exe ctrlp#pipe#savePmt(C)
       | else | cal ctrlp#acceptfile(a:mode, split(S[-1], '\v[\t]')[-1]) | endif
 
 Git/grep :call ctrlp#pipe#opt({'type': 'line'}) |
