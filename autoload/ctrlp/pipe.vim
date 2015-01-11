@@ -128,7 +128,7 @@ function! ctrlp#pipe#exit(...) abort "{{{
     let [s:RETRY, s:TARGET] = [0, []]
     call ctrlp#pipe#optReset()
   endif
-  " ctrlp#call() ?
+  " ctrlp#call(fname, arg, arg, ..., arg) ?
   let mdata = get(ctrlp#getvar('s:'), 'mdata', [])
   if get(mdata, 1, 0) is s:ID | call remove(mdata, 0, -1) | endif
   call s:trashBuf()
@@ -136,14 +136,23 @@ endfunction "}}}
 function! ctrlp#pipe#optReset() abort "{{{
   let g:ctrlp_ext_vars[s:IDX] = extend(copy(s:pipe_core), s:pipe_opt)
 endfunction "}}}
-function! ctrlp#pipe#savePmt() "{{{
-  let s:SAVEPMT.deftxt = join(ctrlp#getvar('s:prompt'), '')
+function! ctrlp#pipe#exeTail(...) abort "{{{
+  let tail = ctrlp#call('s:tail')
+  if tail !=# ''
+    exe tail[stridx(tail, '+') + 1 :]
+  endif
+  return a:0 ? a:1 : ''
+endfunction "}}}
+function! ctrlp#pipe#savePmt(...) abort "{{{
+  let s:SAVEPMT.prompt = ctrlp#getvar('s:prompt')
   let lnum = 0
   if has_key(s:SAVEPMT, 'jump_lnum')
     let lnum = remove(s:SAVEPMT, 'jump_lnum')
   endif
-  return lnum && ctrlp#getvar('s:nolim')
-  \     ? printf('cal feedkeys(''%dgg'', ''n'')', lnum) : ''
+  if lnum && ctrlp#getvar('s:nolim')
+    cal feedkeys(lnum . 'G', 'n')
+  endif
+  return a:0 ? a:1 : ''
 endfunction "}}}
 function! ctrlp#pipe#opt(keyOrDict, ...) abort "{{{
   let Ext = g:ctrlp_ext_vars[s:IDX]
