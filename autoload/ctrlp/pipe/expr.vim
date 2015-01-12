@@ -4,15 +4,17 @@ function! ctrlp#pipe#expr#excute(expr, mode) abort "{{{
   try
     execute a:expr
   catch /./
-    return ctrlp#pipe#log(v:exception)
+    cal ctrlp#pipe#log([v:exception, a:expr])
+    return 0
   endtry
+  return 1
 endfunction "}}}
 function! ctrlp#pipe#expr#eval(...) abort "{{{
   for [k, v] in ctrlp#pipe#expr#items() | let {k} = v | unlet! k | unlet! v | endfor
   try
     return eval(a:1)
   catch /./
-    return ctrlp#pipe#log(v:exception)
+    return ctrlp#pipe#log([v:exception, a:1])
   endtry
 endfunction "}}}
 function! ctrlp#pipe#expr#items() abort "{{{

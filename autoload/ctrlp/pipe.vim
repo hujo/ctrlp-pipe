@@ -26,13 +26,23 @@ function! s:toT(expr) abort "{{{
   endif
   return []
 endfunction "}}}
-function! s:doExp(mode, str) abort "{{{
-  call ctrlp#pipe#_selection(a:str)
-  for [k, v] in s:ACTION
-    if k ==# a:mode || k ==# '-'
-      call ctrlp#pipe#expr#excute(v, a:mode)
+function! s:exeOrder(list) "{{{
+  for cmd in a:list
+    if !call('ctrlp#pipe#expr#excute', cmd)
+      return 0
     endif
   endfor
+  return 1
+endfunction "}}}
+function! s:doExp(mode, str) abort "{{{
+  call ctrlp#pipe#_selection(a:str)
+  let acts = []
+  for [k, v] in s:ACTION
+    if k ==# a:mode || k ==# '-'
+      call add(acts, [v, a:mode])
+    endif
+  endfor
+  return s:exeOrder(acts)
 endfunction "}}}
 function! s:parseCmdLine(line) abort "{{{
   " Todo:
@@ -101,15 +111,14 @@ function! ctrlp#pipe#_command(...) abort "{{{
 endfunction "}}}
 function! ctrlp#pipe#log(...) abort "{{{
   if a:0 == 1
-    call add(s:LOG, {
-    \ 'A': s:toP(a:1),
-    \ 'C': s:toP(get(s:, 'COMMAND')),
-    \ 'S': s:toP(get(s:, 'SELECTION')),
-    \ 'T': s:toP(get(s:, 'TARGET'))
-    \})
+    call add(s:LOG, [
+    \  s:toP(a:1)
+    \, s:toP(get(s:, 'SELECTION', ''))
+    \, s:toP(get(s:, 'COMMAND', ''))
+    \])
     return a:1
   elseif a:0 && a:[a:0]
-    call add(s:LOG, { 'A' : deepcopy(a:) })
+    call ctrlp#pipe#log(values(deepcopy(a:))[:-2])
     return a:[a:[a:0]]
   endif
   return deepcopy(s:LOG)
@@ -137,10 +146,28 @@ endfunction "}}}
 function! ctrlp#pipe#optReset() abort "{{{
   let g:ctrlp_ext_vars[s:IDX] = extend(copy(s:pipe_core), s:pipe_opt)
 endfunction "}}}
-function! ctrlp#pipe#exeTail(...) abort "{{{
+function! ctrlp#pipe#getTail() "{{{
   let tail = ctrlp#call('s:tail')
+  return tail[stridx(tail, '+') + 1 :]
+endfunction "}}}
+function! ctrlp#pipe#exeTailLcd(lcd, ...) abort "{{{
+  if !isdirectory(a:lcd) | throw a:lcd . ' is not directory' | endif
+  let cwd = getcwd()
+  lcd `=a:lcd`
+  for i in range(len(a:000) - 1)
+    if !ctrlp#pipe#expr#excute(a:000[i])
+      lcd `=cwd`
+      return get(a:000, -1, '')
+    endif
+  endfor
+  let ret = ctrlp#pipe#exeTail(get(a:000, -1, ''))
+  lcd `=cwd`
+  return ret
+endfunction "}}}
+function! ctrlp#pipe#exeTail(...) abort "{{{
+  let tail = ctrlp#pipe#getTail()
   if tail !=# ''
-    call ctrlp#pipe#expr#excute(tail[stridx(tail, '+') + 1 :], s:MODE)
+    cal ctrlp#pipe#expr#excute(tail, s:MODE)
   endif
   return a:0 ? a:1 : ''
 endfunction "}}}
@@ -199,10 +226,12 @@ function! ctrlp#pipe#read(line) abort "{{{
   else
     let [input, body] = ['', line]
   endif
-  let tmp = split(body, '\v\s+--\ze[thev-]\s+')
+  let tmp = split(body, '\v\s+--\ze-\s+|\s+--\ze[thev]{1,3}\s+')
   let body = remove(tmp, 0)
   for t in tmp
-    call add(pats, [t[0], substitute(strpart(t, 1), '\v^\s+', '', 'g')])
+    for i in range(stridx(t, ' '))
+      call add(pats, [t[i], substitute(t, '\v^(-|[thev]{1,3})\s+', '', 'g')])
+    endfor
   endfor
   unlet! tmp
   " }}}
@@ -210,6 +239,7 @@ function! ctrlp#pipe#read(line) abort "{{{
     let s:SELECTION = [input]
   endif
   " {{{
+  let s:TARGET = []
   let [s:TARGET, s:ACTION] = [s:toT(ctrlp#pipe#expr#eval(body)), pats]
   " }}}
   return s:ID
