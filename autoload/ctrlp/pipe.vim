@@ -10,6 +10,20 @@ if get(g:, 'loaded_ctrlp_pipe', 0)
 endif
 let g:loaded_ctrlp_pipe = 1
 
+function! s:flatArr(arr) "{{{
+  let ret = []
+  for val in a:arr
+    if type(val) is type([])
+      call extend(ret, s:flatArr(val))
+    elseif type(val) is type({})
+      call extend(ret, s:flatArr(values(val)))
+    else
+      call add(ret, val)
+    endif
+    unlet! val
+  endfor
+  return ret
+endfunction "}}}
 function! s:toP(val, ...) abort "{{{
   let t = type(a:val)
   if type('') == t | return a:0 ? string(a:val) : a:val | endif
@@ -152,24 +166,22 @@ function! ctrlp#pipe#getTail() "{{{
 endfunction "}}}
 function! ctrlp#pipe#exeTailLcd(lcd, ...) abort "{{{
   if !isdirectory(a:lcd) | throw a:lcd . ' is not directory' | endif
+  let exprs = s:flatArr(deepcopy(a:000))
+  if empty(exprs) | call add(exprs, '') | endif
   let cwd = getcwd()
   lcd `=a:lcd`
-  for i in range(len(a:000) - 1)
-    if !ctrlp#pipe#expr#excute(a:000[i])
-      lcd `=cwd`
-      return get(a:000, -1, '')
-    endif
-  endfor
-  let ret = ctrlp#pipe#exeTail(get(a:000, -1, ''))
+  let ret = ctrlp#pipe#exeTail(exprs)
   lcd `=cwd`
   return ret
 endfunction "}}}
 function! ctrlp#pipe#exeTail(...) abort "{{{
   let tail = ctrlp#pipe#getTail()
-  if tail !=# ''
+  let exprs = s:flatArr(deepcopy(a:000))
+  let ret = empty(exprs) ? '' : remove(exprs, -1)
+  if s:exeOrder(exprs) && tail !=# ''
     cal ctrlp#pipe#expr#excute(tail, s:MODE)
   endif
-  return a:0 ? a:1 : ''
+  return ret
 endfunction "}}}
 function! ctrlp#pipe#savePmt(...) abort "{{{
   let s:SAVEPMT.prompt = ctrlp#getvar('s:prompt')
