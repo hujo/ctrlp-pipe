@@ -120,14 +120,14 @@ This is Commentout
 " The default value of "type" is "path", so change it to "line"
 Line/jump :cal ctrlp#pipe#opt({'type': 'line'}) |
   " [ehtv] normal ggzvzz
-  " 'tail': true
-  sort(map(getline(0,'$'),'v:val."\t:".(v:key+1)'))
-    --- exe 'norm!' matchstr(S[-1],'\v\d+$') . 'ggzvzz' | exe ctrlp#pipe#savePmt(ctrlp#pipe#exeTail(C))
+  " [tail] exe
+  sort(map(getline(0,'$'),'v:val."\t:".(v:key+1)'), 'i')
+    --- exe 'norm!' matchstr(S[-1],'\v\d+$') . 'ggzvzz' | exe ctrlp#pipe#savePmt(ctrlp#pipe#fn#exeTail(C))
 
 " The default value of "opmul" is 0, so change it to 1
 File/old :cal ctrlp#pipe#opt({'opmul': 1}) |
-  " [ehtv] ctrlp#acceptfile
-  " 'opmul': true
+  " [ehtv] acceptfile
+  " [opmul][tail]
   reverse(filter(copy(v:oldfiles),'filereadable(expand(v:val))'))
     --- cal ctrlp#pipe#savePmt() | cal ctrlp#acceptfile(a:mode,S[-1]) | exe C
 
@@ -144,23 +144,24 @@ Sys/reg/query
     --t call remove(S, -2, -1) --- exe C
 
 File/Filer
-  " [dir: t] lcd >> tail
-  " [dir: h] lcd >> tail >> lcd -
-  " [file: ehtv] ctrlp#acceptfile
+  " [dir
+  "   [t] lcd > tail
+  "   [h] lcd > tail > lcd -
+  "   [ev] move
+  " ]
+  " [file] acceptfile
   ./ --> extend(reverse(map(glob(S[-1] . '*', 0, 1),
           'fnamemodify(v:val, '':t'') . (isdirectory(v:val) ? ''/'' : '''')'
          )), ['..', '.'])
-    --- let file = fnamemodify(join(remove(S, -2 , -1), ''), ':p')
-      | if isdirectory(file)
-      |   if a:mode ==# 't' | lcd `=file` | cal ctrlp#pipe#exeTail() | en
-      |   if a:mode ==# 'h'
-      |     let cwd = getcwd()
-      |     lcd `=file` | exe ctrlp#pipe#exeTail(ctrlp#pipe#savePmt('lcd ' . cwd))
-      |   endif
-      |   cal add(S, file) | exe C
-      | elseif filereadable(file)
-      |   cal ctrlp#pipe#savePmt()
-      |   cal ctrlp#acceptfile(a:mode, file) | exe C
+    --- cal add(S, fnamemodify(join(remove(S, -2 , -1), ''), ':p'))
+      | if isdirectory(S[-1])
+      |   if a:mode ==# 't' | lcd `=S[-1]` | cal ctrlp#pipe#fn#exeTail() | en
+      |   if a:mode ==# 'h' | cal ctrlp#pipe#fn#exeTailLcd(S[-1]) | en
+      |   if ctrlp#pipe#fn#getTail() !=# '' | cal ctrlp#pipe#savePmt() | en
+      |   exe C
+      | elseif filereadable(S[-1])
+      |   cal ctrlp#acceptfile(a:mode, S[-1])
+      |   if a:mode !=# 'e' | exe ctrlp#pipe#savePmt(C) | en
       | endif
 
 Vim/redir :call ctrlp#pipe#opt({'type': 'line'}) |
@@ -173,7 +174,7 @@ Vim/redir :call ctrlp#pipe#opt({'type': 'line'}) |
 Vim/color :cal ctrlp#pipe#opt({'type': 'tabs'}) |
   " [e] change colorscheme
   " [t] toggle background
-  " [hv] ctrlp#acceptfile(a:mode, file)
+  " [hv] acceptfile
   map( ctrlp#pipe#fn#fillSp(
         map( globpath( &rtp, 'colors/*.vim', 0, 1 )
       , '[fnamemodify(v:val, '':t:r''), v:val]' )
@@ -181,12 +182,11 @@ Vim/color :cal ctrlp#pipe#opt({'type': 'tabs'}) |
   ,'join(v:val, "\t")' )
     --t let &bg = &bg[0] ==# 'l' ? 'dark' : 'light'
     --e exe 'colo' split(S[-1])[0]
-    --- if a:mode =~# '[et]'
-      |   exe ctrlp#pipe#savePmt(C)
-      | else | cal ctrlp#acceptfile(a:mode, split(S[-1], '\v[\t]')[-1]) | endif
+    --et exe ctrlp#pipe#savePmt(C)
+    --hv cal ctrlp#acceptfile(a:mode, split(S[-1], '\v[\t]')[-1])
 
 Git/grep :call ctrlp#pipe#opt({'type': 'line'}) |
-  " [ehtv] ctrlp#acceptfile
+  " [ehtv] acceptfile
   " (git grep -n -e input toplevel)
     map(split(system(printf(
         'git grep --full-name -n -e %s %s'
@@ -208,9 +208,23 @@ Git/log/diff :cal ctrlp#pipe#opt({'type': 'line'}) |
       | setf diff
 
 Git/file/ls :cal ctrlp#pipe#opt({'opmul': 1}) |
-  " [ehtv] ctrlp#acceptfile
+  " [ehtv] acceptfile
   " [opmul]
   system('git ls-files') --- cal ctrlp#acceptfile(a:mode,S[-1])
+
+Vim/cmd :cal ctrlp#pipe#opt({'type': 'tabs'}) |
+  " [ehtv] acceptfile > search()
+  reverse(sort(map(ctrlp#pipe#fn#fillSp(map (
+    split(join(_.redir('verbose com', 1)[1:], "\n"), '\v\s*Last set from \f+\zs\n')
+  , '[
+        matchstr(v:val, ''\v\C!?\s*\zs[A-Z][A-Za-z0-9]*'')
+      , matchstr(v:val, ''\v\f+$'')
+    ]'
+  ), 0), 'join(v:val, "\t")')))
+    --- let S[-1] = map(split(S[-1], "\t"), 'substitute(v:val, ''\v^\s+|\s+$'', '''', ''g'')')
+      | cal ctrlp#acceptfile(a:mode, S[-1][1], '')
+      | cal search(printf('\v\Ccom%[mand]!?.+(<%s>|(\n\s*\\.+)+<%s>)', S[-1][0], S[-1][0]), 'cW')
+    --- exe ctrlp#pipe#savePmt(C)
 
 Hist/cmd :cal ctrlp#pipe#opt({'type': 'line'}) |
   ctrlp#pipe#fn#redir('his :',1)[1:-1]

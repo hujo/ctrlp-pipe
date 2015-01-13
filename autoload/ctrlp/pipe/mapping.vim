@@ -109,7 +109,14 @@ function! s:getCmdWithName(cmdname) abort "{{{
   let file = get(g:, 'ctrlp_pipe_file', '')
   let cmds = has_key(s:SOUCES, file)
   \        ? get(s:SOUCES[file], 'cmds', {}) : {}
-  return get(cmds, a:cmdname, {})
+  let cmd = copy(get(cmds, a:cmdname, {}))
+  if !empty(cmd)
+    let [bef, aft] = split(cmd.value, '\v^.+\zsCtrlPipe\ze')
+    let lname = 'CtrlPipe[' . a:cmdname . ']'
+    let extopt = printf('cal ctrlp#pipe#opt(''lname'', ''%s'', ''not reset'') | CtrlPipe', lname)
+    let cmd.value = bef . extopt . aft
+  endif
+  return cmd
 endfunction "}}}
 function! s:readLine() abort "{{{
   let file = fnamemodify(expand(get(g:, 'ctrlp_pipe_file', s:SFILE)), ':p')
@@ -130,14 +137,14 @@ endfunction "}}}
 function! ctrlp#pipe#mapping#register() "{{{
   if maparg('<plug>(ctrlp-pipe)') ==# ''
     nnoremap <silent><plug>(ctrlp-pipe)
-    \   :<c-u>call ctrlp#pipe#opt({'type': 'tabs'})
+    \   :<c-u>call ctrlp#pipe#opt({'type': 'tabs', 'lname': 'CtrlPipe'})
     \     <bar>CtrlPipe reverse(sort(<sid>readLine()))
     \     --- call ctrlp#pipe#exit(1) <bar> exe <sid>L2C(S[-1])<cr>
   endif
 endfunction "}}}
 
 function! ctrlp#pipe#mapping#getCmd(name) "{{{
-  if empty(s:getCmdWithName(a:name)) | call s:readLine() | endif
+  call s:readLine()
   return get(s:getCmdWithName(a:name), 'value', '')
 endfunction "}}}
 
