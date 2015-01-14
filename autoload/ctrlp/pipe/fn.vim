@@ -52,6 +52,14 @@ function! ctrlp#pipe#fn#exeOrder(...) abort "{{{
   endfor
   return 1
 endfunction "}}}
+function! ctrlp#pipe#fn#evalLcd(lcd, expr) abort "{{{
+  if !isdirectory(a:lcd) | throw a:lcd . ' is not directory' | endif
+  let cwd = getcwd()
+  lcd `=a:lcd`
+  let ret = ctrlp#pipe#expr#eval(a:expr)
+  lcd `=cwd`
+  return ret
+endfunction "}}}
 function! ctrlp#pipe#fn#getTail(...) abort "{{{
   let tail = ctrlp#call('s:tail')
   return tail[stridx(tail, '+') + 1 :]

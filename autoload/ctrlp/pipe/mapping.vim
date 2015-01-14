@@ -112,11 +112,23 @@ function! s:getCmdWithName(cmdname) abort "{{{
   let cmd = copy(get(cmds, a:cmdname, {}))
   if !empty(cmd)
     let [bef, aft] = split(cmd.value, '\v^.+\zsCtrlPipe\ze')
-    let lname = 'CtrlPipe[' . a:cmdname . ']'
-    let extopt = printf('cal ctrlp#pipe#opt(''lname'', ''%s'', ''not reset'') | CtrlPipe', lname)
+    if get(cmd, 'comment', '') !=# ''
+      let lname = s:getExeStr(cmd.comment)
+    else
+      let lname = a:cmdname
+    endif
+    let extopt = printf('cal ctrlp#pipe#opt(''lname'', %s, ''not reset'') | CtrlPipe', string(lname))
     let cmd.value = bef . extopt . aft
   endif
   return cmd
+endfunction "}}}
+function! s:getExeStr(str) "{{{
+  let exestr =  matchstr(a:str, '\v^\s*\zs\%\{.+\}')
+  return exestr ==# '' ? a:str : exestr
+endfunction "}}}
+function! s:remExeStr(str) "{{{
+  let str = substitute(a:str, '\v\%\{.+\}', '', 'g')
+  return substitute(str, '\v^\s+|\s+$', '', 'g')
 endfunction "}}}
 function! s:readLine() abort "{{{
   let file = fnamemodify(expand(get(g:, 'ctrlp_pipe_file', s:SFILE)), ':p')
@@ -127,7 +139,7 @@ function! s:readLine() abort "{{{
   let g:ctrlp_pipe_file = file
   return map(
   \   ctrlp#pipe#fn#fillSp(values(s:getCmds(file, cmds)), 'name'),
-  \   'v:val.name . "\t" . v:val.comment'
+  \   's:remExeStr(v:val.name) . "\t" . s:remExeStr(v:val.comment)'
   \)
 endfunction "}}}
 function! s:L2C(cmdline) "{{{

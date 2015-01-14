@@ -116,6 +116,14 @@ function! ctrlp#pipe#log(...) abort "{{{
   endif
   return deepcopy(s:LOG)
 endfunction "}}}
+function! ctrlp#pipe#optExt(key, value, ...) abort "{{{
+  let opt = s:SAVEOPT ==# '' ? '' : eval(s:SAVEOPT)
+  if type(opt) == type({})
+    let opt[a:key] = a:value
+    let s:SAVEOPT = string(opt)
+  endif
+  return a:0 ? a:1 : a:value
+endfunction "}}}
 function! ctrlp#pipe#opt(keyOrDict, ...) abort "{{{
   let Ext = g:ctrlp_ext_vars[s:IDX]
   let [trg, t] = [deepcopy(a:keyOrDict), type(a:keyOrDict)]
@@ -130,13 +138,12 @@ function! ctrlp#pipe#opt(keyOrDict, ...) abort "{{{
     call ctrlp#pipe#optReset()
     call map(trg, 'ctrlp#pipe#opt(v:key, v:val, ''noreset'')')
     return get(a:000, 0, '')
-  elseif t is 0
-    return filter(deepcopy(Ext), '!has_key(s:pipe_core, v:key)')
   endif
   return ''
 endfunction "}}}
 function! ctrlp#pipe#optReset() abort "{{{
   let g:ctrlp_ext_vars[s:IDX] = extend(copy(s:pipe_core), s:pipe_opt)
+  return deepcopy(g:ctrlp_ext_vars[s:IDX])
 endfunction "}}}
 function! ctrlp#pipe#savePmt(...) abort "{{{
   let s:SAVEPMT.prompt = ctrlp#getvar('s:prompt')
@@ -145,6 +152,7 @@ function! ctrlp#pipe#savePmt(...) abort "{{{
     let lnum = remove(s:SAVEPMT, 'jump_lnum')
   endif
   if lnum && ctrlp#getvar('s:nolim')
+    while getchar(0) | endwhile
     cal feedkeys(lnum . 'G', 'n')
   endif
   return a:0 ? a:1 : ''
@@ -162,7 +170,7 @@ endfunction "}}}
 function! ctrlp#pipe#read(line) abort "{{{
   let line = substitute(a:line, '\v(\r|\n)$', '', 'g')
   if !s:RETRY
-    let [s:COMMAND, s:SAVEOPT, s:SAVEPMT] = [line, string(ctrlp#pipe#opt(0)), {}]
+    let [s:COMMAND, s:SAVEOPT, s:SAVEPMT] = [line, string(g:ctrlp_ext_vars[s:IDX]), {}]
   endif
   " Todo:
   "  See: s:parseCmdLine()
@@ -203,6 +211,7 @@ function! ctrlp#pipe#exit(...) abort "{{{
   " ctrlp#call(fname, arg, arg, ..., arg) ?
   let mdata = get(ctrlp#getvar('s:'), 'mdata', [])
   if get(mdata, 1, 0) is s:ID | call remove(mdata, 0, -1) | endif
+  call ctrlp#pipe#optReset()
   call s:trashBuf()
 endfunction "}}}
 function! ctrlp#pipe#accept(mode, str) abort "{{{

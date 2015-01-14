@@ -144,14 +144,12 @@ Sys/reg/query
     --t call remove(S, -2, -1) --- exe C
 
 File/Filer
-  " [dir
-  "   [t] lcd > tail
-  "   [h] lcd > tail > lcd -
-  "   [ev] move
-  " ]
-  " [file] acceptfile
-  ./ --> extend(reverse(map(glob(S[-1] . '*', 0, 1),
-          'fnamemodify(v:val, '':t'') . (isdirectory(v:val) ? ''/'' : '''')'
+  " %{fnamemodify(get(ctrlp#pipe#_selection(), -1, '.'), ':p:h')}
+  " DIR [[t] lcd exe tail [h] lcd exe tail lcd - [ehtv] move directory]
+  " FILE [ehtv] acceptfile
+  ./ --> extend(reverse(map(
+          glob( S[-1] . '*', 0, 1 )
+          , 'fnamemodify(v:val, '':t'') . (isdirectory(v:val) ? expand(''/'') : '''')'
          )), ['..', '.'])
     --- cal add(S, fnamemodify(join(remove(S, -2 , -1), ''), ':p'))
       | if isdirectory(S[-1])
@@ -213,7 +211,8 @@ Git/file/ls :cal ctrlp#pipe#opt({'opmul': 1}) |
   system('git ls-files') --- cal ctrlp#acceptfile(a:mode,S[-1])
 
 Vim/cmd :cal ctrlp#pipe#opt({'type': 'tabs'}) |
-  " [ehtv] acceptfile > search()
+  " [htv] acceptfile > search()
+  " [e] :Comd
   reverse(sort(map(ctrlp#pipe#fn#fillSp(map (
     split(join(_.redir('verbose com', 1)[1:], "\n"), '\v\s*Last set from \f+\zs\n')
   , '[
@@ -221,22 +220,23 @@ Vim/cmd :cal ctrlp#pipe#opt({'type': 'tabs'}) |
       , matchstr(v:val, ''\v\f+$'')
     ]'
   ), 0), 'join(v:val, "\t")')))
-    --- let S[-1] = map(split(S[-1], "\t"), 'substitute(v:val, ''\v^\s+|\s+$'', '''', ''g'')')
+    --htv let S[-1] = map(split(S[-1], "\t"), 'substitute(v:val, ''\v^\s+|\s+$'', '''', ''g'')')
       | cal ctrlp#acceptfile(a:mode, S[-1][1], '')
       | cal search(printf('\v\Ccom%[mand]!?.+(<%s>|(\n\s*\\.+)+<%s>)', S[-1][0], S[-1][0]), 'cW')
-    --- exe ctrlp#pipe#savePmt(C)
+    --htv exe ctrlp#pipe#savePmt(C)
+    --e cal feedkeys(':' . matchstr(S[-1], '\v\w+') . ' ', 'n')
 
 Hist/cmd :cal ctrlp#pipe#opt({'type': 'line'}) |
   ctrlp#pipe#fn#redir('his :',1)[1:-1]
-  " [e] feedkeys [t] execute [h] histdel
+  " [t] feedkeys [e] execute [h] histdel
     --- cal add(S,str2nr(matchstr(S[-1], '\v\d+')))
-    --e cal feedkeys(':' . histget(':',S[-1]), 't')
-    --t unsilent exe histget(':',S[-1])
+    --t cal feedkeys(':' . histget(':',S[-1]), 'nt')
+    --e exe histget(':', S[-1])
     --h cal ctrlp#pipe#savePmt() | cal histdel(':',S[-1]) | exe C
 
 Hist/search :cal ctrlp#pipe#opt({'type': 'line'}) |
   " [e] feedkeys [h] histdel
   ctrlp#pipe#fn#redir('his /',1)[1:-1]
     --- call add(S,str2nr(matchstr(S[-1], '\v\d+')))
-    --e cal feedkeys('/' . histget('search', S[-1]), 't')
+    --e cal feedkeys('/' . histget('search', S[-1]), 'nt')
     --h cal ctrlp#pipe#savePmt() | cal histdel('/',S[-1]) | exe C
