@@ -228,15 +228,15 @@ Vim/cmd :cal ctrlp#pipe#opt({'type': 'tabs'}) |
 
 Hist/cmd :cal ctrlp#pipe#opt({'type': 'line'}) |
   ctrlp#pipe#fn#redir('his :',1)[1:-1]
-  " [t] feedkeys [e] execute [h] histdel
+  " [e] feedkeys [h] execute [t] histdel
     --- cal add(S,str2nr(matchstr(S[-1], '\v\d+')))
-    --t cal feedkeys(':' . histget(':',S[-1]), 'nt')
-    --e exe histget(':', S[-1])
-    --h cal ctrlp#pipe#savePmt() | cal histdel(':',S[-1]) | exe C
+    --e cal feedkeys(':' . histget(':',S[-1]), 'nt')
+    --h exe histget(':', S[-1])
+    --t cal ctrlp#pipe#savePmt() | cal histdel(':',S[-1]) | exe C
 
 Hist/search :cal ctrlp#pipe#opt({'type': 'line'}) |
-  " [e] feedkeys [h] histdel
+  " [e] feedkeys [t] histdel
   ctrlp#pipe#fn#redir('his /',1)[1:-1]
     --- call add(S,str2nr(matchstr(S[-1], '\v\d+')))
     --e cal feedkeys('/' . histget('search', S[-1]), 'nt')
-    --h cal ctrlp#pipe#savePmt() | cal histdel('/',S[-1]) | exe C
+    --t cal ctrlp#pipe#savePmt() | cal histdel('/',S[-1]) | exe C
