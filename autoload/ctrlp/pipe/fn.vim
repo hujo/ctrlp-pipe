@@ -83,8 +83,3 @@ function! ctrlp#pipe#fn#exeTailLcd(lcd, ...) abort "{{{
   lcd `=cwd`
   return ret
 endfunction "}}}
-function! ctrlp#pipe#fn#getWithType(dict, key, B, ...) abort "{{{
-  let val = get(a:dict, a:key, a:B)
-  return !a:0 ? type(val) is type(a:B) ? val : a:B
-  \           : type(val) isnot type(a:B) ? val : a:B
-endfunction "}}}

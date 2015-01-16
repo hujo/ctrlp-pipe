@@ -54,7 +54,7 @@ if get(g:, 'ctrlp_pipe_disable', 0)
   finish
 endif
 
-command! -complete=expression -nargs=* CtrlPipe call ctrlp#init(ctrlp#pipe#read(<q-args>))
+command! -bang -complete=expression -nargs=* CtrlPipe call ctrlp#init(ctrlp#pipe#read(<q-args>, <bang>1))
 "Todo:
 "command! -complete=customlist, -nargs=? CtrlPipeDispatch
 
@@ -167,7 +167,7 @@ Vim/redir :call ctrlp#pipe#opt({'type': 'line'}) |
   " (Please input command!)
   ctrlp#pipe#fn#redir(insert(S, input('input command: ','','command'), 0)[0])
   --t cal ctrlp#pipe#savePmt()
-    | exe 'CtrlPipe sort(' . string(T) . ')'
+    | exe 'CtrlPipe! sort(' . string(T) . ')'
 
 Vim/color :cal ctrlp#pipe#opt({'type': 'tabs'}) |
   " [e] change colorscheme

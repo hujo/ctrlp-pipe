@@ -117,8 +117,8 @@ function! s:getCmdWithName(cmdname) abort "{{{
     else
       let lname = a:cmdname
     endif
-    let extopt = printf('cal ctrlp#pipe#opt(''lname'', %s, ''not reset'') | CtrlPipe', string(lname))
-    let cmd.value = bef . extopt . aft
+    let extopt = printf('cal ctrlp#pipe#opt(''lname'', %s) | CtrlPipe! ', string(lname))
+    let cmd.value = 'cal ctrlp#pipe#reset() | ' . bef . extopt . aft
   endif
   return cmd
 endfunction "}}}
@@ -151,17 +151,10 @@ function! ctrlp#pipe#mapping#register() "{{{
     nnoremap <silent><plug>(ctrlp-pipe)
     \   :<c-u>call ctrlp#pipe#opt({'type': 'tabs', 'lname': 'CtrlPipe'})
     \     <bar>CtrlPipe reverse(sort(<sid>readLine()))
-    \     --- call ctrlp#pipe#exit(1) <bar> exe <sid>L2C(S[-1])<cr>
+    \     --- exe <sid>L2C(S[-1])<cr>
   endif
 endfunction "}}}
-
 function! ctrlp#pipe#mapping#getCmd(name) "{{{
   call s:readLine()
   return get(s:getCmdWithName(a:name), 'value', '')
-endfunction "}}}
-
-function! ctrlp#pipe#mapping#getCmdNS() "{{{
-  if empty(s:getCmdWithName(a:name)) | call s:readLine() | endif
-  " Todo:
-  "return deepcopy()
 endfunction "}}}

@@ -10,6 +10,7 @@ if get(g:, 'loaded_ctrlp_pipe', 0)
 endif
 let g:loaded_ctrlp_pipe = 1
 
+
 function! s:toP(val, ...) abort "{{{
   let t = type(a:val)
   if type('') == t | return a:0 ? string(a:val) : a:val | endif
@@ -26,7 +27,18 @@ function! s:toT(expr) abort "{{{
   endif
   return []
 endfunction "}}}
-
+function! s:getExt() abort "{{{
+  if !exists('s:Ext')
+    let s:Ext = {}
+  endif
+  return s:Ext
+endfunction "}}}
+function! s:resetExt() abort "{{{
+  for k in keys(s:getExt())
+    cal remove(s:Ext, k)
+  endfor
+  return extend(s:Ext, extend(copy(s:pipe_core), s:pipe_opt))
+endfunction "}}}
 function! s:doExp(str) abort "{{{
   call ctrlp#pipe#_selection(a:str)
   let acts = []
@@ -37,7 +49,6 @@ function! s:doExp(str) abort "{{{
   endfor
   return ctrlp#pipe#fn#exeOrder(acts)
 endfunction "}}}
-
 function! s:parseCmdLine(line) abort "{{{
   " Todo:
   " regexp:
@@ -58,32 +69,6 @@ function! s:trashBuf() abort "{{{
   endfor
 endfunction "}}}
 
-if !exists('s:ID') " {{{
-  let s:pipe_core =  {
-  \ 'init'  : 'ctrlp#pipe#init()',
-  \ 'accept': 'ctrlp#pipe#accept',
-  \ 'exit'  : 'ctrlp#pipe#exit()',
-  \ 'sname' : 'pipe',
-  \}
-  let s:pipe_opt = {
-  \ 'lname' : 'pipe',
-  \ 'nolim' : 1,
-  \ 'type'  : 'path',
-  \ 'opmul' : 0
-  \}
-
-  call add(g:ctrlp_ext_vars, extend(copy(s:pipe_core), s:pipe_opt))
-  let [s:IDX, s:ID, s:LOG] = [len(g:ctrlp_ext_vars) - 1, g:ctrlp_builtins + len(g:ctrlp_ext_vars), []]
-
-  let s:TARGET  = []
-  let s:ACTION  = []
-  let s:RETRY   = 0
-  let s:MODE    = ''
-  let s:COMMAND = ''
-  let s:SAVEOPT = ''
-  let s:SAVEPMT = {}
-
-endif "}}}
 
 function! ctrlp#pipe#_selection(...) abort "{{{
   let ret = get(s:, 'SELECTION', [''])
@@ -95,12 +80,12 @@ function! ctrlp#pipe#_target(...) abort "{{{
 endfunction "}}}
 function! ctrlp#pipe#_command(...) abort "{{{
   let cmd = get(s:, 'COMMAND', '')
-  return cmd ==# '' ? ''
-  \ : printf('cal ctrlp#pipe#opt(%s) |', s:SAVEOPT) . 'CtrlPipe ' . cmd
+  return cmd ==# '' ? '' : 'CtrlPipe! ' . cmd
 endfunction "}}}
 function! ctrlp#pipe#_mode(...) abort "{{{
   return s:MODE
 endfunction "}}}
+
 
 function! ctrlp#pipe#log(...) abort "{{{
   if a:0 == 1
@@ -116,34 +101,24 @@ function! ctrlp#pipe#log(...) abort "{{{
   endif
   return deepcopy(s:LOG)
 endfunction "}}}
-function! ctrlp#pipe#optExt(key, value, ...) abort "{{{
-  let opt = s:SAVEOPT ==# '' ? '' : eval(s:SAVEOPT)
-  if type(opt) == type({})
-    let opt[a:key] = a:value
-    let s:SAVEOPT = string(opt)
-  endif
-  return a:0 ? a:1 : a:value
-endfunction "}}}
-function! ctrlp#pipe#opt(keyOrDict, ...) abort "{{{
-  let Ext = g:ctrlp_ext_vars[s:IDX]
-  let [trg, t] = [deepcopy(a:keyOrDict), type(a:keyOrDict)]
+function! ctrlp#pipe#opt(targ, ...) abort "{{{
+  let Ext = s:getExt()
+  let [trg, t] = [deepcopy(a:targ), type(a:targ)]
   if t is type('')
-    if !a:0 | return deepcopy(get(Ext, trg, '')) | endif
-    if a:0 is 1
-      call ctrlp#pipe#optReset()
-    endif
-    let Ext[trg] = ctrlp#pipe#fn#getWithType(Ext, get(Ext, trg, a:1), a:1, 'not')
-    return a:1
+    if a:0 == 0 | return deepcopy(get(Ext, trg, '')) | endif
+    let Ext[trg] = deepcopy(a:1)
   elseif t is type({})
-    call ctrlp#pipe#optReset()
-    call map(trg, 'ctrlp#pipe#opt(v:key, v:val, ''noreset'')')
-    return get(a:000, 0, '')
+    call extend(Ext, trg, get(a:000, 0, 'force'))
   endif
-  return ''
 endfunction "}}}
-function! ctrlp#pipe#optReset() abort "{{{
-  let g:ctrlp_ext_vars[s:IDX] = extend(copy(s:pipe_core), s:pipe_opt)
-  return deepcopy(g:ctrlp_ext_vars[s:IDX])
+function! ctrlp#pipe#reset() abort "{{{
+  call s:resetExt()
+  let s:SELECTION = []
+  let s:TARGET  = []
+  let s:ACTION  = []
+  let s:MODE    = ''
+  let s:COMMAND = ''
+  let s:SAVEPMT = {}
 endfunction "}}}
 function! ctrlp#pipe#savePmt(...) abort "{{{
   let s:SAVEPMT.prompt = ctrlp#getvar('s:prompt')
@@ -167,11 +142,10 @@ function! ctrlp#pipe#init(...) abort "{{{
   endif
   return reverse(copy(s:TARGET))
 endfunction "}}}
-function! ctrlp#pipe#read(line) abort "{{{
+function! ctrlp#pipe#read(line, is_reset) abort "{{{
+  if a:is_reset | cal ctrlp#pipe#reset() | endif
   let line = substitute(a:line, '\v(\r|\n)$', '', 'g')
-  if !s:RETRY
-    let [s:COMMAND, s:SAVEOPT, s:SAVEPMT] = [line, string(g:ctrlp_ext_vars[s:IDX]), {}]
-  endif
+  let s:COMMAND = line
   " Todo:
   "  See: s:parseCmdLine()
   " let [input, s:TARGET, s:ACTION] = s:parseCmdLine(line)
@@ -194,33 +168,46 @@ function! ctrlp#pipe#read(line) abort "{{{
   endfor
   unlet! tmp
   " }}}
-  if !s:RETRY || empty(s:SELECTION)
+  if empty(s:SELECTION)
     let s:SELECTION = [input]
   endif
   " {{{
-  let s:TARGET = []
   let [s:TARGET, s:ACTION] = [s:toT(ctrlp#pipe#expr#eval(body)), pats]
   " }}}
   return s:ID
 endfunction "}}}
 function! ctrlp#pipe#exit(...) abort "{{{
-  if a:0 && a:1 is 1
-    let [s:RETRY, s:TARGET] = [0, []]
-    call ctrlp#pipe#optReset()
-  endif
-  " ctrlp#call(fname, arg, arg, ..., arg) ?
   let mdata = get(ctrlp#getvar('s:'), 'mdata', [])
   if get(mdata, 1, 0) is s:ID | call remove(mdata, 0, -1) | endif
-  call ctrlp#pipe#optReset()
   call s:trashBuf()
 endfunction "}}}
 function! ctrlp#pipe#accept(mode, str) abort "{{{
   let s:SAVEPMT.jump_lnum = line('.')
   let s:MODE = a:mode
-  let s:RETRY = 0 | call ctrlp#exit()
-  let s:RETRY = 1 | call s:doExp(a:str)
-  let s:RETRY = 0 | call ctrlp#pipe#exit()
+  call ctrlp#exit()
+  call s:doExp(a:str)
+  call ctrlp#pipe#exit()
 endfunction "}}}
+
+if !exists('s:ID') " {{{
+  let s:pipe_core =  {
+  \ 'init'  : 'ctrlp#pipe#init()',
+  \ 'accept': 'ctrlp#pipe#accept',
+  \ 'exit'  : 'ctrlp#pipe#exit()',
+  \ 'sname' : 'pipe',
+  \}
+  let s:pipe_opt = {
+  \ 'lname' : 'pipe',
+  \ 'nolim' : 1,
+  \ 'type'  : 'path',
+  \ 'opmul' : 0
+  \}
+
+  cal ctrlp#pipe#reset()
+  call add(g:ctrlp_ext_vars, s:getExt())
+  let [s:IDX, s:ID, s:LOG] = [len(g:ctrlp_ext_vars) - 1, g:ctrlp_builtins + len(g:ctrlp_ext_vars), []]
+
+endif "}}}
 
 let &cpoptions = s:save_cpo
 unlet! s:save_cpo
