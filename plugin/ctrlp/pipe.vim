@@ -136,10 +136,12 @@ File/old :cal ctrlp#pipe#opt({'opmul': 1}) |
 Sys/reg/query
   " [ehv] down [t] up
   " (reg query %s)
-  HKLM --> filter( [S[-1]]
-               + split(system(printf('reg query "%s"',S[-1])), '\v\r\n|\n|\r'),
-             'v:val !~# ''\v^\s*$'''
-           )
+  ( len(S) < 2 ? extend( S, ['HKLM', 'HKCU'] ) :
+      filter( [S[-1]]
+            + split(system(printf('reg query "%s"',S[-1])), '\v\r\n|\n|\r'),
+        'v:val !~# ''\v^\s*$'''
+      )
+  )
     --- if S[-1] ==# S[-2] | call remove(S, -1) | endif
     --t call remove(S, -2, -1) --- exe C
 
@@ -155,7 +157,7 @@ File/Filer
       | if isdirectory(S[-1])
       |   if a:mode ==# 't' | lcd `=S[-1]` | cal ctrlp#pipe#fn#exeTail() | en
       |   if a:mode ==# 'h' | cal ctrlp#pipe#fn#exeTailLcd(S[-1]) | en
-      |   if ctrlp#pipe#fn#getTail() !=# '' | cal ctrlp#pipe#savePmt() | en
+      |   if a:mode ==# 'e' | cal ctrlp#pipe#fn#exeTail() | en
       |   exe C
       | elseif filereadable(S[-1])
       |   cal ctrlp#acceptfile(a:mode, S[-1])

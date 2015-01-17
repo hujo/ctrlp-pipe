@@ -77,22 +77,6 @@ Behaves like ctrlp-line.
 
     :CtrlPipe sort(map(getline(0,'$'),'v:val."\t:".(v:key+1)')) --- exe ctrlp#pipe#savePmt() | exe 'norm!' matchstr(S[-1],'\v\d+$') . 'ggzvzz' | exe C
 
-
-------------------------------------------------------------------------------
-### Example
-```vim
-" Example:
-" Select and open the file from v:oldfiles
-" can get a mode 'a:mode'
-:CtrlPipe filter(copy(v:oldfiles), 'filereadable(expand(v:val))') --- call ctrlp#acceptfile(a:mode, S[-1])
-
-" Example:
-"   reg query browse (windows)
-"     <CR>  -> next
-"     <C-t> -> back
-:CtrlPipe HKLM --> S[-1] . system(printf('reg query "%s"', S[-1])) --t call remove(S, -2, -1) --- exe C
-```
-
 ------------------------------------------------------------------------------
 ### Use it as launcher.
 
