@@ -136,14 +136,14 @@ File/old :cal ctrlp#pipe#opt({'opmul': 1}) |
 Sys/reg/query
   " [ehv] down [t] up
   " (reg query %s)
-  ( len(S) < 2 ? extend( S, ['HKLM', 'HKCU'] ) :
-      filter( [S[-1]]
-            + split(system(printf('reg query "%s"',S[-1])), '\v\r\n|\n|\r'),
+  HKLM --> ( len(S) == 1 ? add(S, 'HKCU') : len(S) == 2 ? S :
+      filter(
+        split(system(printf('reg query "%s"',S[-1])), '\v\r\n|\n|\r'),
         'v:val !~# ''\v^\s*$'''
       )
   )
-    --- if S[-1] ==# S[-2] | call remove(S, -1) | endif
-    --t call remove(S, -2, -1) --- exe C
+    --t call remove(S, -2 , -1)
+    --- exe C
 
 File/Filer
   " %{fnamemodify(get(ctrlp#pipe#_selection(), -1, '.'), ':p:h')}
