@@ -135,14 +135,13 @@ File/old :cal ctrlp#pipe#opt({'opmul': 1}) |
 @has('win32')@
 Sys/reg/query
   " [ehv] down [t] up
-  " (reg query %s)
-  HKLM --> ( len(S) == 1 ? add(S, 'HKCU') : len(S) == 2 ? S :
-      filter(
-        split(system(printf('reg query "%s"',S[-1])), '\v\r\n|\n|\r'),
-        'v:val !~# ''\v^\s*$'''
-      )
+ HKLM --> ( len(S) == 1 ? extend(S, ['HKCU', 'HKCR', 'HKU','HKCC'])
+     : filter(split(system(printf('reg query "%s"',S[-1])), "\n"), 'v:val != ''''') + ['..']
   )
-    --t call remove(S, -2 , -1)
+    --- if S[-1] ==# S[-2] || S[-1][0] ==# ' '
+      |   cal remove(S, -1) | en
+    --- if a:mode == 't' || S[-1] ==# '..'
+      |   call remove(S, len(S) <= 7 ? 0 : -2 , -1) | en
     --- exe C
 
 File/Filer
