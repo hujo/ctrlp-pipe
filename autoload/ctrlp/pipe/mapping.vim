@@ -149,8 +149,8 @@ endfunction "}}}
 function! ctrlp#pipe#mapping#register() "{{{
   if maparg('<plug>(ctrlp-pipe)') ==# ''
     nnoremap <silent><plug>(ctrlp-pipe)
-    \   :<c-u>call ctrlp#pipe#opt({'type': 'tabs', 'lname': 'CtrlPipe'})
-    \     <bar>CtrlPipe reverse(sort(<sid>readLine()))
+    \   :<c-u>call ctrlp#pipe#opt({'type': 'tabs', 'lname': 'CtrlPipe'}, 'force', 1)
+    \     <bar>CtrlPipe! reverse(sort(<sid>readLine()))
     \     --- exe <sid>L2C(S[-1])<cr>
   endif
 endfunction "}}}

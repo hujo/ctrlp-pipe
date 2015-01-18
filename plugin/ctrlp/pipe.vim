@@ -159,7 +159,7 @@ File/Filer
       |   if a:mode ==# 'e' | cal ctrlp#pipe#fn#exeTail() | en
       |   exe C
       | elseif filereadable(S[-1])
-      |   cal ctrlp#acceptfile(a:mode, S[-1])
+      |   cal ctrlp#acceptfile(a:mode, remove(S, -1))
       |   if a:mode !=# 'e' | exe ctrlp#pipe#savePmt(C) | en
       | endif
 

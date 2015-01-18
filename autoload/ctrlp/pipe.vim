@@ -102,6 +102,7 @@ function! ctrlp#pipe#log(...) abort "{{{
   return deepcopy(s:LOG)
 endfunction "}}}
 function! ctrlp#pipe#opt(targ, ...) abort "{{{
+  cal ctrlp#pipe#reset(get(a:000, 1, 0))
   let Ext = s:getExt()
   let [trg, t] = [deepcopy(a:targ), type(a:targ)]
   if t is type('')
@@ -111,7 +112,8 @@ function! ctrlp#pipe#opt(targ, ...) abort "{{{
     call extend(Ext, trg, get(a:000, 0, 'force'))
   endif
 endfunction "}}}
-function! ctrlp#pipe#reset() abort "{{{
+function! ctrlp#pipe#reset(...) abort "{{{
+  if a:0 && a:1 is 0 | return | endif
   call s:resetExt()
   let s:SELECTION = []
   let s:TARGET  = []
