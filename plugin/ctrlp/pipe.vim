@@ -129,7 +129,8 @@ File/old :cal ctrlp#pipe#opt({'opmul': 1}) |
   " [ehtv] acceptfile
   " [opmul][tail]
   reverse(filter(copy(v:oldfiles),'filereadable(expand(v:val))'))
-    --- cal ctrlp#pipe#savePmt() | cal ctrlp#acceptfile(a:mode,S[-1]) | exe C
+    --- cal ctrlp#acceptfile(a:mode,S[-1])
+    --vht exe ctrlp#pipe#savePmt(C)
 
 " if has('win32') --> enable
 @has('win32')@
