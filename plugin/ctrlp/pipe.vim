@@ -149,10 +149,11 @@ File/Filer
   " %{fnamemodify(get(ctrlp#pipe#_selection(), -1, '.'), ':p:h')}
   " DIR [[t] lcd exe tail [h] lcd exe tail lcd - [ehtv] move directory]
   " FILE [ehtv] acceptfile
-  ./ --> extend(reverse(map(
-          glob( S[-1] . '*', 0, 1 )
-          , 'fnamemodify(v:val, '':t'') . (isdirectory(v:val) ? expand(''/'') : '''')'
-         )), ['..', '.'])
+  ./ --> reverse(map(
+          glob( S[-1] . '.*', 0, 1) + glob( S[-1] . '*', 0, 1 ) , '
+              fnamemodify(v:val, '':t'')
+            . (v:val[-1:] !=# ''.'' && isdirectory(v:val) ? expand(''/'') : '''')
+          '))
     --- cal add(S, fnamemodify(join(remove(S, -2 , -1), ''), ':p'))
       | if isdirectory(S[-1])
       |   if a:mode ==# 't' | lcd `=S[-1]` | cal ctrlp#pipe#fn#exeTail() | en
