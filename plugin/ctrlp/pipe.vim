@@ -157,7 +157,6 @@ File/Filer
       | if isdirectory(S[-1])
       |   if a:mode ==# 't' | lcd `=S[-1]` | cal ctrlp#pipe#fn#exeTail() | en
       |   if a:mode ==# 'h' | cal ctrlp#pipe#fn#exeTailLcd(S[-1]) | en
-      |   if a:mode ==# 'e' | cal ctrlp#pipe#fn#exeTail() | en
       |   exe C
       | elseif filereadable(S[-1])
       |   cal ctrlp#acceptfile(a:mode, remove(S, -1))
