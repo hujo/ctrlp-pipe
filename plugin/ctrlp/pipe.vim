@@ -181,8 +181,8 @@ Vim/color :cal ctrlp#pipe#opt({'type': 'tabs'}) |
     , 0 )
   ,'join(v:val, "\t")' )
     --t let &bg = &bg[0] ==# 'l' ? 'dark' : 'light'
-    --e exe 'colo' split(S[-1])[0]
-    --et exe ctrlp#pipe#savePmt(C)
+    --et exe 'colo' split(S[-1])[0]
+       | exe ctrlp#pipe#savePmt(C)
     --hv cal ctrlp#acceptfile(a:mode, split(S[-1], '\v[\t]')[-1])
 
 Git/grep :call ctrlp#pipe#opt({'type': 'line'}) |

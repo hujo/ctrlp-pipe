@@ -137,10 +137,10 @@ function! s:readLine() abort "{{{
     let cmds = s:getCmds(s:SFILE, cmds)
   endif
   let g:ctrlp_pipe_file = file
-  return map(
-  \   ctrlp#pipe#fn#fillSp(values(s:getCmds(file, cmds)), 'name'),
-  \   's:remExeStr(v:val.name) . "\t" . s:remExeStr(v:val.comment)'
-  \)
+  return map(ctrlp#pipe#fn#fillSp(map(
+  \     values(s:getCmds(file, cmds))
+  \   , '[s:remExeStr(v:val.name) . ''  '', s:remExeStr(v:val.comment)]')
+  \ , 0) , 'join(v:val,"\t")')
 endfunction "}}}
 function! s:L2C(cmdline) "{{{
   return get(s:getCmdWithName(split(a:cmdline)[0]), 'value', '')
