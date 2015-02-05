@@ -130,7 +130,7 @@ File/old :cal ctrlp#pipe#opt({'opmul': 1}) |
   " [opmul][tail]
   reverse(filter(copy(v:oldfiles),'filereadable(expand(v:val))'))
     --- cal ctrlp#acceptfile(a:mode,S[-1])
-    --vht exe ctrlp#pipe#savePmt(C)
+    --- exe ctrlp#pipe#savePmt(C)
 
 " if has('win32') --> enable
 @has('win32')@
@@ -176,7 +176,7 @@ Vim/color :cal ctrlp#pipe#opt({'type': 'tabs'}) |
   " [t] toggle background
   " [hv] acceptfile
   map( ctrlp#pipe#fn#fillSp(
-        map( globpath( &rtp, 'colors/*.vim', 0, 1 )
+        map( split(globpath( &rtp, 'colors/*.vim', 0), '\v\r\n|\r|\n')
       , '[fnamemodify(v:val, '':t:r''), v:val]' )
     , 0 )
   ,'join(v:val, "\t")' )
@@ -233,8 +233,8 @@ Hist/cmd :cal ctrlp#pipe#opt({'type': 'line'}) |
   " [e] feedkeys [h] execute [t] histdel
     --- cal add(S,str2nr(matchstr(S[-1], '\v\d+')))
     --e cal feedkeys(':' . histget(':',S[-1]), 'nt')
-    --h exe histget(':', S[-1])
-    --t cal ctrlp#pipe#savePmt() | cal histdel(':',S[-1]) | exe C
+    --h cal ctrlp#pipe#savePmt() | exe histget(':', S[-1]) | exe C
+    --t cal ctrlp#pipe#savePmt() | cal histdel(':',S[-1])  | exe C
 
 Hist/search :cal ctrlp#pipe#opt({'type': 'line'}) |
   " [e] feedkeys [t] histdel
@@ -242,3 +242,19 @@ Hist/search :cal ctrlp#pipe#opt({'type': 'line'}) |
     --- call add(S,str2nr(matchstr(S[-1], '\v\d+')))
     --e cal feedkeys('/' . histget('search', S[-1]), 'nt')
     --t cal ctrlp#pipe#savePmt() | cal histdel('/',S[-1]) | exe C
+
+Buffer/ls
+  " [ehvt] accept [tail] if tail ==# 'd' bdelete
+  ctrlp#pipe#fn#redir('ls', 1)
+    --- if ctrlp#pipe#fn#getTail() ==# 'd'
+      |   exe 'bd' str2nr(split(S[-1])[0])
+      | else
+      |   cal ctrlp#acceptfile(a:mode, str2nr(split(S[-1])[0]))
+      | en
+    --- exe ctrlp#pipe#savePmt(C)
+
+Buffer/del
+  " if listed bdelete else bwipeout
+  ctrlp#pipe#fn#redir('ls!', 1)
+  --- exe (buflisted(S[1]) ? 'bd' : 'bw') str2nr(split(S[-1])[0])
+
