@@ -257,4 +257,15 @@ Buffer/del
   " if listed bdelete else bwipeout
   ctrlp#pipe#fn#redir('ls!', 1)
   --- exe (buflisted(S[1]) ? 'bd' : 'bw') str2nr(split(S[-1])[0])
+  --- exe ctrlp#pipe#savePmt(C)
 
+Tag/jump
+  " :<cout>tags <cword>
+  map( ctrlp#pipe#fn#fillSp(
+        map( taglist(expand('<cword>'))
+          , '[v:key, v:val.cmd, v:val.filename, v:val.name]')
+      , 0, 1, 2)
+  , 'join(v:val, '' '')')
+  --- let S[-1] = split(S[-1])
+  --- exe printf('%dtag %s', S[-1][0], S[-1][-1])
+  --- exe ctrlp#pipe#savePmt(C)
