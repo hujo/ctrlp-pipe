@@ -112,6 +112,13 @@ function! ctrlp#pipe#opt(targ, ...) abort "{{{
     call extend(Ext, trg, get(a:000, 0, 'force'))
   endif
 endfunction "}}}
+function! ctrlp#pipe#getActStr() abort "{{{
+  let ret = ''
+  for [k, v] in s:ACTION
+    let ret .= ' --' . k . ' ' . v
+  endfor
+  return ret
+endfunction "}}}
 function! ctrlp#pipe#reset(...) abort "{{{
   if a:0 && a:1 is 0 | return | endif
   call s:resetExt()
