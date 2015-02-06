@@ -260,7 +260,7 @@ Buffer/del
   --- exe ctrlp#pipe#savePmt(C)
 
 Tag/jump
-  " :<cout>tags <cword>
+  " <count>tag <cword> [e] tag [h] stag [v] vert stag
   map( ctrlp#pipe#fn#fillSp(
         map( taglist(expand('<cword>'))
           , '[v:key, v:val.cmd, v:val.filename, v:val.name]')
@@ -268,6 +268,6 @@ Tag/jump
   , 'join(v:val, '' '')')
   --- let S[-1] = split(S[-1])
   --e exe printf('%dtag %s', S[-1][0], S[-1][-1])
-  --v exe printf('vert %dstag %s', S[-1][0], S[-1][-1])
   --h exe printf('%dstag %s', S[-1][0], S[-1][-1])
+  --v exe printf('vert %dstag %s', S[-1][0], S[-1][-1])
   --- exe ctrlp#pipe#savePmt(C)
