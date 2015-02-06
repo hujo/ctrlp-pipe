@@ -269,5 +269,6 @@ Tag/jump
   --- let S[-1] = split(S[-1])
   --e exe printf('%dtag %s', S[-1][0], S[-1][-1])
   --h exe printf('%dstag %s', S[-1][0], S[-1][-1])
+  --t exe printf('tab %dstag %s', S[-1][0], S[-1][-1])
   --v exe printf('vert %dstag %s', S[-1][0], S[-1][-1])
   --- exe ctrlp#pipe#savePmt(C)
