@@ -164,6 +164,12 @@ File/Filer
       |   if a:mode !=# 'e' | exe ctrlp#pipe#savePmt(C) | en
       | endif
 
+File/vim/rtp
+  filter(split(&rtp, ','), 'v:val !~ ''after$''')
+  --- exe printf('cal ctrlp#pipe#opt(''opmul'', 1)|CtrlPipe! globpath(''%s'', ''**/*.vim'')', S[-1])
+          '--- call ctrlp#acceptfile(a:mode, S[-1])'
+          '--- exe ctrlp#pipe#savePmt(C)'
+
 Vim/redir :call ctrlp#pipe#opt({'type': 'line'}) |
   " [t] sort
   " (Please input command!)

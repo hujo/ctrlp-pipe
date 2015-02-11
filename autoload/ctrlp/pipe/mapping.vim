@@ -111,7 +111,8 @@ function! s:getCmdWithName(cmdname) abort "{{{
   \        ? get(s:SOUCES[file], 'cmds', {}) : {}
   let cmd = copy(get(cmds, a:cmdname, {}))
   if !empty(cmd)
-    let [bef, aft] = split(cmd.value, '\v^.+\zsCtrlPipe\ze')
+    let splcmd = split(cmd.value, 'CtrlPipe')
+    let [bef, aft] = [remove(splcmd, 0), join(splcmd, 'CtrlPipe')]
     if get(cmd, 'comment', '') !=# ''
       let lname = s:getExeStr(cmd.comment)
     else
