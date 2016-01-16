@@ -121,7 +121,7 @@ This is Commentout
 Line/jump :cal ctrlp#pipe#opt({'type': 'line'}) |
   " [ehtv] normal ggzvzz
   " [tail] exe
-  sort(map(getline(0,'$'),'v:val."\t:".(v:key+1)'), 'i')
+  sort(map(getline(0,'$'),'v:val."\t:".(v:key+1)'))
     --- exe 'norm!' matchstr(S[-1],'\v\d+$') . 'ggzvzz' | exe ctrlp#pipe#savePmt(ctrlp#pipe#fn#exeTail(C))
 
 " The default value of "opmul" is 0, so change it to 1
