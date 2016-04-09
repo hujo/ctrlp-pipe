@@ -230,7 +230,7 @@ Vim/cmd :cal ctrlp#pipe#opt({'type': 'tabs'}) |
   ), 0), 'join(v:val, "\t")')))
     --htv let S[-1] = map(split(S[-1], "\t"), 'substitute(v:val, ''\v^\s+|\s+$'', '''', ''g'')')
       | cal ctrlp#acceptfile(a:mode, S[-1][1], '')
-      | cal search(printf('\v\Ccom%[mand]!?.+(<%s>|(\n\s*\\.+)+<%s>)', S[-1][0], S[-1][0]), 'cW')
+      | cal search(printf('\v\C^\s*com%[mand]?!?.+(<%s>|(\n\s*\\.+)+<%s>)', S[-1][0], S[-1][0]), 'cW')
     --htv exe ctrlp#pipe#savePmt(C)
     --e cal feedkeys(':' . matchstr(S[-1], '\v\w+') . ' ', 'n')
 
