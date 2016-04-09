@@ -228,11 +228,10 @@ Vim/cmd :cal ctrlp#pipe#opt({'type': 'tabs'}) |
       , matchstr(v:val, ''\v\f+$'')
     ]'
   ), 0), 'join(v:val, "\t")')))
-    --htv let S[-1] = map(split(S[-1], "\t"), 'substitute(v:val, ''\v^\s+|\s+$'', '''', ''g'')')
-      | cal ctrlp#acceptfile(a:mode, S[-1][1], '')
-      | cal search(printf('\v\C^\s*com%[mand]?!?.+(<%s>|(\n\s*\\.+)+<%s>)', S[-1][0], S[-1][0]), 'cW')
-    --htv exe ctrlp#pipe#savePmt(C)
-    --e cal feedkeys(':' . matchstr(S[-1], '\v\w+') . ' ', 'n')
+    --- let S[-1] = map(split(S[-1], "\t"), 'substitute(v:val, ''\v^\s+|\s+$'', '''', ''g'')')
+    --hvt cal ctrlp#acceptfile(a:mode, S[-1][1], 0)
+      | cal search(printf('\v\C^\s*com%[mmand]?!?.+(<%s>|(\n\s*\\.+)+<%s>)', S[-1][0], S[-1][0]), 'cw')
+    --e cal feedkeys(':' . S[-1][0] . ' ', 'n')
 
 Hist/cmd :cal ctrlp#pipe#opt({'type': 'line'}) |
   ctrlp#pipe#fn#redir('his :',1)[1:-1]
