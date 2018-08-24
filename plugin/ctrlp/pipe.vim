@@ -137,7 +137,7 @@ File/old :cal ctrlp#pipe#opt({'opmul': 1}) |
 Sys/reg/query
   " [ehv] down [t] up
  HKLM --> ( len(S) == 1 ? extend(S, ['HKCU', 'HKCR', 'HKU','HKCC'])
-     : filter(split(system(printf('reg query "%s"',S[-1])), "\n"), 'v:val != ''''') + ['..']
+     : filter(split(iconv(system(printf('reg query "%s"',S[-1])), 'cp932', &enc), "\n"), 'v:val != ''''') + ['..']
   )
     --- if S[-1] ==# S[-2] || S[-1][0] ==# ' '
       |   cal remove(S, -1) | en
@@ -195,7 +195,7 @@ Git/grep :call ctrlp#pipe#opt({'type': 'line'}) |
   " [ehtv] acceptfile
   " (git grep -n -e input toplevel)
     map(split(system(printf(
-        'git grep --full-name -n -e %s %s'
+        'git grep --full-name -n -e "%s" "%s"'
        , map([join(map(split(input('GitGrep: ')), 'shellescape(v:val)'), ' ')], 'v:val ==# '''' ? ''.'' : v:val')[0]
        , shellescape(insert(S, matchstr(system('git rev-parse --show-toplevel'), '\v\f+') . '/', 0)[0])
     )), '\v\r\n|\r|\n'), 'join(insert(split(v:val, ''\v^\S+:\d+\zs:''), "\t", 1), "")')
